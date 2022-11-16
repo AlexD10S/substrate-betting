@@ -64,13 +64,13 @@ Add `pallet-betting`, and the RPC runtime API, to dependencies.
 version = "0.0.1"
 default-features = false
 git = "https://github.com/AlexD10S/substrate-betting.git"
-branch = "master"
+branch = "main"
 
 [dependencies.pallet-betting-rpc-runtime-api]
 version = "0.0.1"
 default-features = false
 git = "https://github.com/AlexD10S/substrate-betting.git"
-branch = "master"
+branch = "main"
 ```
 
 Update the runtime's `std` feature:
@@ -92,17 +92,10 @@ Add `pallet-betting-rpc` to dependencies.
 version = "0.0.1"
 default-features = false
 git = "https://github.com/AlexD10S/substrate-betting.git"
-branch = "master"
+branch = "main"
 ```
 
 ### Runtime's `lib.rs`
-
-Import required types and traits.
-```rust
-use frame_support::PalletId;
-use frame_system::EnsureRoot;
-use sp_runtime::traits::Identity;
-```
 
 
 Configure the betting pallet.

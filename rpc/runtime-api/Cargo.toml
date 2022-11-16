@@ -1,5 +1,5 @@
 [package]
-name = "pallet-betting-runtime-api"
+name = "pallet-betting-rpc-runtime-api"
 authors = ["Alex Bean <alejandro.bean@parity.io>"]
 version = "0.0.1"
 description = "RPC runtime API fot the betting pallet"
