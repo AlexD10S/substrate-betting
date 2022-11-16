@@ -1,0 +1,20 @@
+[package]
+name = "pallet-betting-runtime-api"
+authors = ["Alex Bean <alejandro.bean@parity.io>"]
+version = "0.0.1"
+description = "RPC runtime API fot the betting pallet"
+edition = "2021"
+publish = false
+repository = "https://github.com/AlexD10S/substrate-betting"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+sp-api = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.31", default-features = false }
+
+[features]
+default = ["std"]
+std = [
+	"sp-api/std",
+]

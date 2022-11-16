@@ -1,0 +1,44 @@
+[package]
+name = "pallet-betting-rpc"
+version = "0.0.1"
+edition = "2021"
+authors = ["Alex Bean <alejandro.bean@parity.io>"]
+description = 'RPC methods for the betting pallet'
+publish = false
+repository = "https://github.com/AlexD10S/substrate-betting"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
+	"derive",
+] }
+jsonrpsee = { version = "0.15.1", features = ["server", "macros"] }
+lazy_static = { version = "1.4.0", optional = true }
+tokio = { version = "1.17.0", optional = true }
+serde = "1.0.136"
+serde_json = "1.0.85"
+
+# Substrate packages
+sp-api = { default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.31" }
+sp-blockchain = { default-features = false, version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.31" }
+sp-runtime = { default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.31" }
+
+# local packages
+pallet-betting-runtime-api = { path = "./runtime-api", default-features = false }
+
+[dev-dependencies]
+assert_matches = "1.3.0"
+tokio = "1.17.0"
+lazy_static = "1.4.0"
+substrate-test-runtime-client = { version = "2.0.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.31" }
+
+[features]
+default = ["std"]
+std = [
+  "sp-api/std",
+  "sp-runtime/std",
+  "pallet-betting-runtime-api/std"
+]
+test-helpers = ["lazy_static", "tokio"]
