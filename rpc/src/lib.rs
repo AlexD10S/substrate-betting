@@ -1,4 +1,4 @@
-pub use pallet_betting_runtime_api::BettingApi as BettingRuntimeApi;
+pub use pallet_betting_rpc_runtime_api::BettingApi as BettingRuntimeApi;
 use jsonrpsee::{
 	core::{Error as JsonRpseeError, RpcResult},
 	proc_macros::rpc,

@@ -129,7 +129,7 @@ Add the RPC implementation.
 ```rust
 impl_runtime_apis! {
     // --snip--
-    impl pallet_betting_runtime_api::BettingApi<Block> for Runtime {
+    impl pallet_betting_rpc_runtime_api::BettingApi<Block> for Runtime {
       fn get_value() -> u32 {
         Betting::get_value().unwrap_or(0)
       }
