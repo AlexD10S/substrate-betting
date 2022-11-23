@@ -18,8 +18,8 @@ mod tests;
 
 #[rpc(client, server)]
 pub trait BettingApi<BlockHash> {
-	#[method(name = "betting_getValue")]
-	fn get_value(&self, at: Option<BlockHash>) -> RpcResult<Custom>;
+	#[method(name = "betting_getMatches")]
+	fn get_matches(&self, at: Option<BlockHash>) -> RpcResult<Custom>;
 }
 
 /// A struct that implements the `BettingApi`.
@@ -43,11 +43,11 @@ where
 	C: Send + Sync + 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
 	C::Api: BettingRuntimeApi<Block>,
 {
-	fn get_value(&self, at: Option<<Block as BlockT>::Hash>) -> RpcResult<Custom> {
+	fn get_matches(&self, at: Option<<Block as BlockT>::Hash>) -> RpcResult<Custom> {
 		let api = self.client.runtime_api();
 		let at = BlockId::hash(at.unwrap_or_else(||self.client.info().best_hash));
 
-		let value = api.get_value(&at).map_err(runtime_error_into_rpc_err);
+		let value = api.get_matches(&at).map_err(runtime_error_into_rpc_err);
 		Ok(Custom{ code: 200, sum: value.unwrap()})
 	}
 }

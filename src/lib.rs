@@ -119,7 +119,7 @@ pub mod pallet {
 
 	// The set of open matches.
 	#[pallet::storage]
-	#[pallet::getter(fn get_value)]
+	#[pallet::getter(fn get_matches)]
 	pub type Matchs<T: Config> = StorageMap<
 		_, Twox64Concat, T::AccountId, Match<T::BlockNumber, Vec<u8>, Bet<T::AccountId, MatchResult, BalanceOf<T>,>, T::MaxBetsPerMatch>, 
 	>;

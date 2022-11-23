@@ -18,7 +18,8 @@ This pallet implements a basic protocol for decentralized betting.
 * `Currency` – The currency type.
 
 ### Constants
-* `MinDeposit` – Minimum amount of currency which must be deposited when creating a new bet.
+* `PalletId` – Pallet ID. Used for account derivation.
+* `MaxBetsPerMatch` – Maximum number of bets per match.
 
 ## Extrinsics
 
@@ -102,13 +103,14 @@ Configure the betting pallet.
 ```rust
 
 parameter_types! {
-    pub const Deposit: ConstU128 = ConstU128<1>;
+    pub const BettingPalletId: PalletId = PalletId(*b"py/betts");
 }
 
 impl pallet_betting::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
+    type PalletId = BettingPalletId;
     type Currency = Balances;
-    type MinDeposit = Deposit;
+    type MaxBetsPerMatch = ConstU32<10>;
 }
 ```
 
@@ -130,8 +132,8 @@ Add the RPC implementation.
 impl_runtime_apis! {
     // --snip--
     impl pallet_betting_rpc_runtime_api::BettingApi<Block> for Runtime {
-      fn get_value() -> u32 {
-        Betting::get_value().unwrap_or(0)
+      fn get_matches() ->  pallet_betting::Matches {
+        Betting::get_matches().unwrap_or({})
       }
     }
 }
