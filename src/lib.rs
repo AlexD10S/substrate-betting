@@ -21,6 +21,7 @@ use frame_support::{
 	traits::{Get, Currency},
 	RuntimeDebug, BoundedVec,
 };
+use sp_std::prelude::*;
 
 type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 type BalanceOf<T> =
@@ -178,6 +179,7 @@ pub mod pallet {
 			ensure!(current_block_number < (start + length), Error::<T>::TimeMatchOver);
 
 			//TODO: Check if match: team1 vs team2 exists?
+			//TODO: Deposit to create match?
 
 			// Initialize the bets bounded_vec
 			let bets: BoundedVec<Bet<T::AccountId, MatchResult, BalanceOf<T>,>, T::MaxBetsPerMatch> = Default::default();
