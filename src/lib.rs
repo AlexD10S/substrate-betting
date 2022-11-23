@@ -130,7 +130,7 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// A new match has been created. [who, team1, team2, start, length]
-		MatchCreated(T::AccountId, String, String, T::BlockNumber, T::BlockNumber,),
+		MatchCreated(T::AccountId, Vec<u8>, Vec<u8>, T::BlockNumber, T::BlockNumber,),
 	}
 
 	// Errors inform users that something went wrong.
@@ -163,8 +163,8 @@ pub mod pallet {
 		#[pallet::weight(10_000 + T::DbWeight::get().writes(1).ref_time())]
 		pub fn create_match_to_bet(
 			origin: OriginFor<T>, 
-			team1: String,
-			team2: String,
+			team1: Vec<u8>,
+			team2: Vec<u8>,
 			start: T::BlockNumber,
 			length: T::BlockNumber,
 		) -> DispatchResult {
@@ -183,15 +183,12 @@ pub mod pallet {
 
 			// Initialize the bets bounded_vec
 			let bets: BoundedVec<Bet<T::AccountId, MatchResult, BalanceOf<T>,>, T::MaxBetsPerMatch> = Default::default();
-			//Store the strings as Vec<8>
-			let team1_bytes: Vec<u8> = team1.as_bytes().to_vec();
-			let team2_bytes: Vec<u8> = team2.as_bytes().to_vec();
 			// Create the betting match
 			let betting_match = Match {
 				start,
 				length,
-				team1: team1_bytes,
-				team2: team2_bytes,
+				team1: team1.clone(),
+				team2: team2.clone(),
 				bets
 			};
 			// Store the betting match in the list of open matches
