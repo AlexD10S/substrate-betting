@@ -120,7 +120,7 @@ pub mod pallet {
 	// The set of open matches.
 	#[pallet::storage]
 	#[pallet::getter(fn get_matches)]
-	pub type Matchs<T: Config> = StorageMap<
+	pub type Matches<T: Config> = StorageMap<
 		_, Twox64Concat, T::AccountId, Match<T::BlockNumber, Vec<u8>, Bet<T::AccountId, MatchResult, BalanceOf<T>,>, T::MaxBetsPerMatch>, 
 	>;
 
@@ -173,7 +173,7 @@ pub mod pallet {
 			// https://docs.substrate.io/main-docs/build/origins/
 			let who = ensure_signed(origin)?;
 			// Check account has not an open match
-			ensure!(!<Matchs<T>>::contains_key(&who), Error::<T>::OriginHasAlreadyOpenMatch);
+			ensure!(!<Matches<T>>::contains_key(&who), Error::<T>::OriginHasAlreadyOpenMatch);
 			// Check time start and time length are valid
 			let current_block_number = <frame_system::Pallet<T>>::block_number();
 			ensure!(current_block_number < (start + length), Error::<T>::TimeMatchOver);
@@ -192,7 +192,7 @@ pub mod pallet {
 				bets
 			};
 			// Store the betting match in the list of open matches
-			<Matchs<T>>::insert(&who, betting_match);
+			<Matches<T>>::insert(&who, betting_match);
 
 			// Emit an event.
 			Self::deposit_event(Event::MatchCreated(who, team1, team2, start, length));
