@@ -66,7 +66,6 @@ pub mod pallet {
 	use super::*;
 	use frame_support::{
 		pallet_prelude::*,
-		dispatch::{Dispatchable, GetDispatchInfo},
 		sp_runtime::{
             traits::{
                 AccountIdConversion
@@ -140,6 +139,8 @@ pub mod pallet {
 		MatchAlreadyExists,
 		/// Each account can only have one match open.
 		OriginHasAlreadyOpenMatch,
+		/// The time of the match is over.
+		TimeMatchOver,
 	}
 
 	#[pallet::call]
@@ -157,6 +158,7 @@ pub mod pallet {
         /// **Errors:**
         ///   * `MatchAlreadyExists` – A match for the specified values already exists.
 		///   * `OriginHasAlreadyOpenMatch` – An origin can only have one match open.
+		///   * `TimeMatchOver` – The match is created when the match time is over.
 		#[pallet::weight(10_000 + T::DbWeight::get().writes(1).ref_time())]
 		pub fn create_match_to_bet(
 			origin: OriginFor<T>, 
@@ -169,9 +171,16 @@ pub mod pallet {
 			// This function will return an error if the extrinsic is not signed.
 			// https://docs.substrate.io/main-docs/build/origins/
 			let who = ensure_signed(origin)?;
+			// Check account has not an open match
+			ensure!(!<Matchs<T>>::contains_key(&who), Error::<T>::OriginHasAlreadyOpenMatch);
+			// Check time start and time length are valid
+			let current_block_number = <frame_system::Pallet<T>>::block_number();
+			ensure!(current_block_number < (start + length), Error::<T>::TimeMatchOver);
+
+			//TODO: Check if match: team1 vs team2 exists?
 
 			// Initialize the bets bounded_vec
-			let mut bets: BoundedVec<Bet<T::AccountId, MatchResult, BalanceOf<T>,>, T::MaxBetsPerMatch> = Default::default();
+			let bets: BoundedVec<Bet<T::AccountId, MatchResult, BalanceOf<T>,>, T::MaxBetsPerMatch> = Default::default();
 			//Store the strings as Vec<8>
 			let team1_bytes: Vec<u8> = team1.as_bytes().to_vec();
 			let team2_bytes: Vec<u8> = team2.as_bytes().to_vec();
