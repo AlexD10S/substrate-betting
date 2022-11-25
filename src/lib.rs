@@ -15,13 +15,16 @@ mod tests;
 
 
 pub use pallet::*;
-use codec::{Decode, Encode, MaxEncodedLen};
+use codec::{Decode, Encode, MaxEncodedLen, HasCompact};
 use scale_info::TypeInfo;
 use frame_support::{
-	traits::{Get, Currency},
+	traits::{Get, Currency, ExistenceRequirement::KeepAlive},
 	RuntimeDebug, BoundedVec,
 };
-use sp_std::prelude::*;
+use sp_std::{
+	cmp::Ordering,
+	prelude::*,
+};
 
 type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 type BalanceOf<T> =
@@ -34,7 +37,7 @@ pub enum MatchResult {
 	Draw,
 }
 
-#[derive(Encode, Decode, Clone, Copy, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
+#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, scale_info::TypeInfo)]
 /// A bet.
 pub struct Bet<AccountId, MatchResult, Balance> {
 	/// Account of the better.
@@ -44,6 +47,27 @@ pub struct Bet<AccountId, MatchResult, Balance> {
 	/// Result he picked
 	result: MatchResult,
 }
+impl<AccountId, Balance> Ord for Bet<AccountId, MatchResult, Balance>
+where
+	AccountId: Ord,
+	Balance: Ord + HasCompact,
+{
+	fn cmp(&self, other: &Self) -> Ordering {
+		self.bettor
+			.cmp(&other.bettor)
+			.then_with(|| self.amount.cmp(&other.amount))
+	}
+}
+impl<AccountId, Balance> PartialOrd for Bet<AccountId, MatchResult, Balance>
+where
+	AccountId: Ord,
+	Balance: Ord + HasCompact,
+{
+	fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+		Some(self.cmp(other))
+	}
+}
+
 #[derive(Clone, Eq, PartialEq, Encode, Decode, Default, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 #[scale_info(skip_type_params(MaxBetsPerMatch))]
 pub struct Match<BlockNumber, Vec, Bet, MaxBetsPerMatch>
@@ -87,7 +111,7 @@ pub mod pallet {
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
-		/// The Lottery's pallet id
+		/// The Betting's pallet id
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 
@@ -131,6 +155,8 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		/// A new match has been created. [who, team1, team2, start, length]
 		MatchCreated(T::AccountId, Vec<u8>, Vec<u8>, T::BlockNumber, T::BlockNumber,),
+		/// A new bet has been created. [matchId, who, amount, result]
+		BetPlaced(T::AccountId, T::AccountId, BalanceOf<T>, MatchResult ),
 	}
 
 	// Errors inform users that something went wrong.
@@ -142,6 +168,14 @@ pub mod pallet {
 		OriginHasAlreadyOpenMatch,
 		/// The time of the match is over.
 		TimeMatchOver,
+		/// The match where the bet is placed does not exist
+		MatchDoesNotExists,
+		/// No allowing betting if the match has started
+		MatchHasStarted,
+		/// The match has reach its betting limit
+		MaxBets,
+		/// You already place the same bet in that match
+		AlreadyBet,
 	}
 
 	#[pallet::call]
@@ -196,6 +230,66 @@ pub mod pallet {
 
 			// Emit an event.
 			Self::deposit_event(Event::MatchCreated(who, team1, team2, start, length));
+			// Return a successful DispatchResultWithPostInfo
+			Ok(())
+		}
+
+		/// Create bet for a match.
+        /// Emit an event on success: `BetPlaced`.
+        ///
+        /// **Parameters:**
+        ///   * `origin` – Origin for the call. Must be signed.
+        ///   * `match_id` – Id of the match, in our case the creator of the bet accountId .
+        ///   * `amount_to_bet` – Amount placed for the bet.
+        ///   * `result` – the result for the bet.
+        ///
+        /// **Errors:**
+        ///   * `MatchDoesNotExists` – A match selected for the bet doesn't exist.
+		///   * `MatchHasStarted` – If the match has started, betting is not allowed.
+		///   * `TimeMatchOver` – The match is created when the match time is over.
+		///   * `MaxBets`   - The match has reach its betting limit
+		///   * `AlreadyBet`   - You already place the same bet in that match
+		#[pallet::weight(10_000 + T::DbWeight::get().writes(1).ref_time())]
+		pub fn bet(
+			origin: OriginFor<T>, 
+			match_id: T::AccountId,
+			amount_to_bet: BalanceOf<T>,
+			result: MatchResult
+		) -> DispatchResult {
+			// Check that the extrinsic was signed and get the signer.
+			let who = ensure_signed(origin)?;
+			//Find the match where user wants to place the bet
+			let mut match_to_bet = <Matches<T>>::get(&match_id).ok_or(Error::<T>::MatchDoesNotExists)?;
+			
+			let current_block_number = <frame_system::Pallet<T>>::block_number();
+			ensure!(current_block_number < match_to_bet.start, Error::<T>::MatchHasStarted);
+
+			//Create the bet to be placed
+			let bet = Bet {
+				bettor: who.clone(),
+				amount: amount_to_bet.clone(),
+				result
+			};
+			// let new_match_to_bet = &match_to_bet;
+			match match_to_bet.bets.binary_search(&bet) {
+				Ok(_pos) => return Err(Error::<T>::AlreadyBet.into()),
+				Err(pos) => match_to_bet
+					.bets
+					.try_insert(pos, bet.clone())
+					.map_err(|_| Error::<T>::MaxBets)?,
+			}
+			// Store the betting match in the list of open matches
+			<Matches<T>>::insert(&who, match_to_bet);
+			// Check user has enough funds and send it to the betting pallet account.
+			T::Currency::transfer(&who, &T::account_id(), amount_to_bet, KeepAlive)?;
+
+			// Emit an event.
+			Self::deposit_event(Event::BetPlaced(
+				match_id,
+				who, 
+				amount_to_bet, 
+				result
+			));
 			// Return a successful DispatchResultWithPostInfo
 			Ok(())
 		}
