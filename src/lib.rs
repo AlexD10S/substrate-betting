@@ -279,7 +279,7 @@ pub mod pallet {
 					.map_err(|_| Error::<T>::MaxBets)?,
 			}
 			// Store the betting match in the list of open matches
-			<Matches<T>>::insert(&who, match_to_bet);
+			<Matches<T>>::insert(&match_id, match_to_bet);
 			// Check user has enough funds and send it to the betting pallet account.
 			T::Currency::transfer(&who, &T::account_id(), amount_to_bet, KeepAlive)?;
 
@@ -293,24 +293,6 @@ pub mod pallet {
 			// Return a successful DispatchResultWithPostInfo
 			Ok(())
 		}
-
-		// #[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1).ref_time())]
-		// pub fn cause_error(origin: OriginFor<T>) -> DispatchResult {
-		// 	let _who = ensure_signed(origin)?;
-
-		// 	// Read a value from storage.
-		// 	match <Something<T>>::get() {
-		// 		// Return an error if the value has not been set.
-		// 		None => return Err(Error::<T>::NoneValue.into()),
-		// 		Some(old) => {
-		// 			// Increment the value read from storage; will error in the event of overflow.
-		// 			let new = old.checked_add(1).ok_or(Error::<T>::StorageOverflow)?;
-		// 			// Update the value in storage with the incremented result.
-		// 			<Something<T>>::put(new);
-		// 			Ok(())
-		// 		},
-		// 	}
-		// }
 	}
 
 }
