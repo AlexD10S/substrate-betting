@@ -1,6 +1,6 @@
 [package]
 name = "pallet-betting"
-version = "0.0.2"
+version = "0.0.3"
 description = "Protocol for decentralized bets"
 authors = ["Alex Bean <alejandro.bean@parity.io>"]
 edition = "2021"

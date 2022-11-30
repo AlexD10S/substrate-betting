@@ -36,7 +36,6 @@ pub enum MatchResult {
 	Team2Victory,
 	Draw,
 }
-
 #[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, scale_info::TypeInfo)]
 /// A bet.
 pub struct Bet<AccountId, MatchResult, Balance> {
@@ -148,15 +147,23 @@ pub mod pallet {
 		_, Twox64Concat, T::AccountId, Match<T::BlockNumber, Vec<u8>, Bet<T::AccountId, MatchResult, BalanceOf<T>,>, T::MaxBetsPerMatch>, 
 	>;
 
+	// The set of open matches.
+	#[pallet::storage]
+	#[pallet::getter(fn get_results)]
+	pub type MatchResults<T: Config> = StorageMap<
+		_, Twox64Concat, T::AccountId, MatchResult>;
+
 	// Pallets use events to inform users when important changes are made.
 	// https://docs.substrate.io/main-docs/build/events-errors/
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// A new match has been created. [who, team1, team2, start, length]
-		MatchCreated(T::AccountId, Vec<u8>, Vec<u8>, T::BlockNumber, T::BlockNumber,),
+		MatchCreated(T::AccountId, Vec<u8>, Vec<u8>, T::BlockNumber, T::BlockNumber),
 		/// A new bet has been created. [matchId, who, amount, result]
-		BetPlaced(T::AccountId, T::AccountId, BalanceOf<T>, MatchResult ),
+		BetPlaced(T::AccountId, T::AccountId, BalanceOf<T>, MatchResult),
+		// A match result has been set
+		MatchResult(T::AccountId, MatchResult),
 	}
 
 	// Errors inform users that something went wrong.
@@ -176,6 +183,10 @@ pub mod pallet {
 		MaxBets,
 		/// You already place the same bet in that match
 		AlreadyBet,
+		/// No allowing set the result if the match not over
+		TimeMatchNotOver,
+		// The match still has not a result set
+		MatchNotResult,
 	}
 
 	#[pallet::call]
@@ -293,8 +304,94 @@ pub mod pallet {
 			// Return a successful DispatchResultWithPostInfo
 			Ok(())
 		}
+
+		/// When a match ends someone the owner of the match can distribute the money from the winers and delete the match .
+        /// Emit an event on success: `WinningsDistributed`.
+        ///
+        /// **Parameters:**
+        ///   * `origin` – Origin for the call. Must be signed.
+        ///
+        /// **Errors:**
+        ///   * `MatchDoesNotExists` – A match selected for the bet doesn't exist.
+		///   * `MatchNotResult` – The match still has not a result.
+		#[pallet::weight(10_000 + T::DbWeight::get().writes(1).ref_time())]
+		pub fn distribute_winnings(
+			origin: OriginFor<T>, 
+		) -> DispatchResult {
+			// Check that the extrinsic was signed and get the signer.
+			let who = ensure_signed(origin)?;
+			//Find the match where user wants to place the bet an delete it
+			let mut match_to_bet = <Matches<T>>::take(&who).ok_or(Error::<T>::MatchDoesNotExists)?;
+			//Find the result of the match the bet an delete it
+			let result_match_to_bet = <MatchResults<T>>::take(&who).ok_or(Error::<T>::MatchNotResult)?;
+			//Check the bets from the array
+			let mut total_winners: BalanceOf<T> = 0u32.into();
+			let mut total_bet: BalanceOf<T> = 0u32.into();
+			let mut winners = Vec::new();
+			for bet in match_to_bet.bets.iter_mut() {
+				total_bet +=  bet.amount;
+				if bet.result == result_match_to_bet {
+					total_winners +=  bet.amount;
+					winners.push(bet)
+				}
+			}
+			//Share the money
+			for bet in winners.iter_mut() {
+				let weighted = bet.amount / total_winners;
+				let amount_won = weighted * total_bet;
+				T::Currency::transfer(&T::account_id(), &bet.bettor, amount_won, KeepAlive)?;
+			}
+
+			// Return a successful DispatchResultWithPostInfo
+			Ok(())
+		}
+	
+
+		/// Notify the result of an existing match.
+		/// The dispatch origin for this call must be _Root_.
+		/// 
+        /// Emit an event on success: `MatchResult`.
+        ///
+        /// **Parameters:**
+        ///   * `origin` – Origin for the call. Must be signed.
+        ///   * `match_id` – Id of the match, in our case the creator of the bet accountId .
+        ///   * `result` – the result for the match.
+        ///
+        /// **Errors:**
+        ///   * `MatchDoesNotExists` – A match selected for the bet doesn't exist.
+		///   * `TimeMatchNotOver` – If the match is not over, set the result is not allowed.
+		#[pallet::weight(10_000 + T::DbWeight::get().writes(1).ref_time())]
+		pub fn set_result(
+			origin: OriginFor<T>, 
+			match_id: T::AccountId,
+			match_result: MatchResult
+		) -> DispatchResult {
+			// Only root can call this extrinic.
+			ensure_root(origin)?;
+			//Find the match where user wants to place the bet
+			let match_to_set_result = <Matches<T>>::get(&match_id).ok_or(Error::<T>::MatchDoesNotExists)?;
+			
+			// Check time start and time length are valid
+			let current_block_number = <frame_system::Pallet<T>>::block_number();
+			ensure!(current_block_number > (match_to_set_result.start + match_to_set_result.length), Error::<T>::TimeMatchNotOver);
+
+			// Store the result of the match
+			<MatchResults<T>>::insert(&match_id, match_result);
+
+			// Emit an event.
+			Self::deposit_event(Event::MatchResult(
+				match_id,
+				match_result, 
+			));
+			// Return a successful DispatchResultWithPostInfo
+			Ok(())
+		}
 	}
 
 }
+
+	
+
+
 
 
