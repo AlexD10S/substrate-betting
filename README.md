@@ -2,14 +2,12 @@
 
 ## Overview
 
-This pallet implements a basic protocol for decentralized betting. 
+This pallet implements a basic protocol for decentralized betting.
+
+Every account can go an create a match and everyone can bet in that match, for a basic result: victory team 1, draw or victory team 2.
+For now only the one with SUDO priviliges can set result.
 
 :warning: It is **not a production-ready paller**, but a sample built for learning purposes. It is discouraged to use this code 'as-is' in a production runtime.
-
-## Main concepts
-
-* **Currency** – The chain's main currency/token (e.g. DOT for the relay chain, ACA for Acala).
-
 
 ## Configuration
 
@@ -24,25 +22,80 @@ This pallet implements a basic protocol for decentralized betting.
 ## Extrinsics
 
 <details>
-<summary><h3>do_something</h3></summary>
+<summary><h3>create_match_to_bet</h3></summary>
 
-Takes a singles value as a parameter, writes the value to storage and emits an event. This function must be dispatched by a signed extrinsic.
-Emit an event on success: `SomethingStored`.
+Creates a match to bet on. This function must be dispatched by a signed extrinsic.
+Emit an event on success: `MatchCreated`.
 
 #### Parameters:
   * `origin` – Origin for the call. Must be signed.
-  * `something` – value to store.
+  * `team1` – Name of the first team.
+  * `team2` – Name of the second team.
+  * `start` – Time when the match starts and a bet can not be placed (in blocks).
+  * `lenght` – Duration of the match (in blocks).
 
 #### Errors:
-  * `NoneValue` – Error names should be descriptive.
+  * `MatchAlreadyExists` – A match for the specified values already exists.
+  * `OriginHasAlreadyOpenMatch` – An origin can only have one match open.
+  * `TimeMatchOver` – The match is created when the match time is over.
 </details>
 
-## RPC
+<details>
+<summary><h3>bet</h3></summary>
+
+Create bet for a match.
+Emit an event on success: `BetPlaced`.
+
+#### Parameters:
+  * `origin` – Origin for the call. Must be signed.
+  * `match_id` – Id of the match, in our case the creator of the bet accountId.
+  * `amount_to_bet` – Amount placed for the bet.
+  * `result` – The result for the bet.
+
+#### Errors:
+  * `MatchDoesNotExists` – A match selected for the bet doesn't exist.
+  * `OriginHasAlreadyOpenMatch` – If the match has started, betting is not allowed.
+  * `TimeMatchOver` – The match is created when the match time is over.
+  * `MaxBets` – The match has reach its betting limit.
+  * `AlreadyBet` – You already place the same bet in that match.
+</details>
 
 <details>
-<summary><h3>template_getValue</h3></summary>
+<summary><h3>set_result</h3></summary>
 
-Get a value stored
+Notify the result of an existing match.
+The dispatch origin for this call must be _Root_.
+Emit an event on success: `MatchResult`.
+
+#### Parameters:
+  * `origin` – Origin for the call. Must be signed.
+  * `match_id` – Id of the match, in our case the creator of the bet accountId.
+  * `result` – The result of the match.
+
+#### Errors:
+  * `MatchDoesNotExists` – A match selected for the bet doesn't exist.
+  * `TimeMatchNotOver` –  If the match is not over, set the result is not allowed.
+</details>
+
+<details>
+<summary><h3>distribute_winnings</h3></summary>
+
+When a match ends someone the owner of the match can distribute the money from the winers and delete the match.
+
+#### Parameters:
+  * `origin` – Origin for the call. Must be signed.
+
+#### Errors:
+  * `MatchDoesNotExists` – A match selected for the bet doesn't exist.
+  * `MatchNotResult` –  The match still has not a result.
+</details>
+
+## RPC (Not yet implemented)
+
+<details>
+<summary><h3>betting_getMatches</h3></summary>
+
+Get all the list of matches created
 
 #### Parameters:
 </details>
@@ -62,7 +115,7 @@ Add `pallet-betting`, and the RPC runtime API, to dependencies.
 ```toml
 
 [dependencies.pallet-betting]
-version = "0.0.1"
+version = "0.0.3"
 default-features = false
 git = "https://github.com/AlexD10S/substrate-betting.git"
 branch = "main"
@@ -127,7 +180,7 @@ construct_runtime!(
 );
 ```
 
-Add the RPC implementation.
+<!-- Add the RPC implementation.
 ```rust
 impl_runtime_apis! {
     // --snip--
@@ -137,10 +190,10 @@ impl_runtime_apis! {
       }
     }
 }
-```
+``` -->
 
 
-### Node's `rpc.rs`
+<!-- ### Node's `rpc.rs`
 
 Instantiate the RPC extension and merge it into the RPC module.
 ```rust
@@ -156,4 +209,4 @@ where
     module.merge(Betting::new(client).into_rpc())?;
     Ok(module)
 }
-```
+``` -->

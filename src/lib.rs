@@ -381,7 +381,6 @@ pub mod pallet {
 			for winner_bet in &winners {
 				let amount_winner = winner_bet.amount.saturated_into::<u128>();
 				let total_winners_in_u64 = total_winners.saturated_into::<u128>();
-				// let weighted =  amount_winner % total_winners_in_u64;
 				let weighted = Perquintill::from_rational(amount_winner, total_winners_in_u64);
 				let amount_won = weighted.mul_floor(total_bet.saturated_into::<u128>());
 				

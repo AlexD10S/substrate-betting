@@ -217,9 +217,9 @@ fn distribute_winnings() {
 		System::set_block_number(22);
 		assert_ok!(Betting::set_result(RawOrigin::Root.into(), match_id, MatchResult::Team1Victory));
 
-		//The owner distributes the prices
+		//The owner distributes the prizes
 		assert_ok!(Betting::distribute_winnings(RuntimeOrigin::signed(1)));
-		//Check that the prices has been distributed propertly.
+		//Check that the prizess has been distributed propertly.
 		// With the maths there were 50 UNITS bet, 10 to the Team2 that lost and has to be shared by the rest
 
 		//The first player deposit 10 and win back 12, has to have 2 UNITS more
@@ -296,7 +296,7 @@ fn error_distribute_winnings_no_result() {
 		assert_ok!(Betting::bet(RuntimeOrigin::signed(3), match_id, 10, MatchResult::Team2Victory));
 		assert_ok!(Betting::bet(RuntimeOrigin::signed(4), match_id, 30, MatchResult::Team1Victory));
 		
-		//The owner tries to distributes the prices
+		//The owner tries to distributes the prizes
 		assert_noop!(
 			Betting::distribute_winnings(RuntimeOrigin::signed(1)),
 			Error::<Test>::MatchNotResult
