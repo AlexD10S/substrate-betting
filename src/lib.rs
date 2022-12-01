@@ -92,12 +92,13 @@ pub mod pallet {
 		pallet_prelude::*,
 		sp_runtime::{
             traits::{
-                AccountIdConversion
+                AccountIdConversion, SaturatedConversion
             },
         },
 		traits::{ReservableCurrency},
-		PalletId,
+		PalletId
 	};
+	use sp_arithmetic::{Perquintill};
 	use frame_system::pallet_prelude::*;
 
 	/// TODO: #[pallet::without_storage_info] line added after error:
@@ -138,6 +139,7 @@ pub mod pallet {
 		fn account_id() -> AccountIdOf<Self> {
 			Self::PalletId::get().into_account_truncating()
 		}
+		
 	}
 
 	// The set of open matches.
@@ -305,48 +307,6 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// When a match ends someone the owner of the match can distribute the money from the winers and delete the match .
-        /// Emit an event on success: `WinningsDistributed`.
-        ///
-        /// **Parameters:**
-        ///   * `origin` – Origin for the call. Must be signed.
-        ///
-        /// **Errors:**
-        ///   * `MatchDoesNotExists` – A match selected for the bet doesn't exist.
-		///   * `MatchNotResult` – The match still has not a result.
-		#[pallet::weight(10_000 + T::DbWeight::get().writes(1).ref_time())]
-		pub fn distribute_winnings(
-			origin: OriginFor<T>, 
-		) -> DispatchResult {
-			// Check that the extrinsic was signed and get the signer.
-			let who = ensure_signed(origin)?;
-			//Find the match where user wants to place the bet an delete it
-			let mut match_to_bet = <Matches<T>>::take(&who).ok_or(Error::<T>::MatchDoesNotExists)?;
-			//Find the result of the match the bet an delete it
-			let result_match_to_bet = <MatchResults<T>>::take(&who).ok_or(Error::<T>::MatchNotResult)?;
-			//Check the bets from the array
-			let mut total_winners: BalanceOf<T> = 0u32.into();
-			let mut total_bet: BalanceOf<T> = 0u32.into();
-			let mut winners = Vec::new();
-			for bet in match_to_bet.bets.iter_mut() {
-				total_bet +=  bet.amount;
-				if bet.result == result_match_to_bet {
-					total_winners +=  bet.amount;
-					winners.push(bet)
-				}
-			}
-			//Share the money
-			for bet in winners.iter_mut() {
-				let weighted = bet.amount / total_winners;
-				let amount_won = weighted * total_bet;
-				T::Currency::transfer(&T::account_id(), &bet.bettor, amount_won, KeepAlive)?;
-			}
-
-			// Return a successful DispatchResultWithPostInfo
-			Ok(())
-		}
-	
-
 		/// Notify the result of an existing match.
 		/// The dispatch origin for this call must be _Root_.
 		/// 
@@ -386,8 +346,55 @@ pub mod pallet {
 			// Return a successful DispatchResultWithPostInfo
 			Ok(())
 		}
-	}
 
+		/// When a match ends someone the owner of the match can distribute the money from the winers and delete the match .
+        /// Emit an event on success: `WinningsDistributed`.
+        ///
+        /// **Parameters:**
+        ///   * `origin` – Origin for the call. Must be signed.
+        ///
+        /// **Errors:**
+        ///   * `MatchDoesNotExists` – A match selected for the bet doesn't exist.
+		///   * `MatchNotResult` – The match still has not a result.
+		#[pallet::weight(10_000 + T::DbWeight::get().writes(1).ref_time())]
+		pub fn distribute_winnings(
+			origin: OriginFor<T>, 
+		) -> DispatchResult {
+			// Check that the extrinsic was signed and get the signer.
+			let who = ensure_signed(origin)?;
+			//Find the match where user wants to place the bet an delete it
+			let mut match_to_bet = <Matches<T>>::take(&who).ok_or(Error::<T>::MatchDoesNotExists)?;
+			//Find the result of the match the bet an delete it
+			let result_match_to_bet = <MatchResults<T>>::take(&who).ok_or(Error::<T>::MatchNotResult)?;
+			//Check the bets from the array
+			let mut total_winners: BalanceOf<T> = 0u32.into();
+			let mut total_bet: BalanceOf<T> = 0u32.into();
+			let mut winners = Vec::new();
+			for bet in match_to_bet.bets.iter_mut() {
+				total_bet +=  bet.amount;
+				if bet.result == result_match_to_bet {
+					total_winners +=  bet.amount;
+					winners.push(bet)
+				}
+			}
+			//Share the money
+			for winner_bet in &winners {
+				let amount_winner = winner_bet.amount.saturated_into::<u128>();
+				let total_winners_in_u64 = total_winners.saturated_into::<u128>();
+				// let weighted =  amount_winner % total_winners_in_u64;
+				let weighted = Perquintill::from_rational(amount_winner, total_winners_in_u64);
+				let amount_won = weighted.mul_floor(total_bet.saturated_into::<u128>());
+				
+				T::Currency::transfer(&T::account_id(), &winner_bet.bettor, amount_won.saturated_into(), KeepAlive)?;
+			}
+
+			// Return a successful DispatchResultWithPostInfo
+			Ok(())
+		}
+		
+	
+	}
+	
 }
 
 	

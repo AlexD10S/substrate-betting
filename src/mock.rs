@@ -72,13 +72,14 @@ impl pallet_betting::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type PalletId = BettingPalletId;
 	type Currency = Balances;
-	type MaxBetsPerMatch = ConstU32<2>;
+	type MaxBetsPerMatch = ConstU32<3>;
 }
 
 pub(crate) const ACCOUNT_A: u64 = 0;
 pub(crate) const ACCOUNT_B: u64 = 1;
 pub(crate) const ACCOUNT_C: u64 = 2;
 pub(crate) const ACCOUNT_D: u64 = 3;
+pub(crate) const ACCOUNT_E: u64 = 4;
 pub(crate) const INIT_BALANCE: u128 = 1_000_000_000_000_000;
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
@@ -92,6 +93,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
             (ACCOUNT_B, INIT_BALANCE),
             (ACCOUNT_C, INIT_BALANCE),
 			(ACCOUNT_D, INIT_BALANCE),
+			(ACCOUNT_E, INIT_BALANCE),
         ],
     }
     .assimilate_storage(&mut storage)
