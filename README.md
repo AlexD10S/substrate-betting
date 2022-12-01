@@ -90,14 +90,15 @@ When a match ends someone the owner of the match can distribute the money from t
   * `MatchNotResult` –  The match still has not a result.
 </details>
 
-## RPC (Not yet implemented)
+## RPC 
 
 <details>
-<summary><h3>betting_getMatches</h3></summary>
+<summary><h3>betting_getMatch</h3></summary>
 
-Get all the list of matches created
+Get a match stored.
 
 #### Parameters:
+* `match_id` – ID of the match to retrieve (accountId of the creator).
 </details>
 
 ## How to add `pallet-betting` to a node
@@ -180,7 +181,7 @@ construct_runtime!(
 );
 ```
 
-<!-- Add the RPC implementation.
+Add the RPC implementation.
 ```rust
 impl_runtime_apis! {
     // --snip--
@@ -190,10 +191,10 @@ impl_runtime_apis! {
       }
     }
 }
-``` -->
+``` 
 
 
-<!-- ### Node's `rpc.rs`
+### Node's `rpc.rs`
 
 Instantiate the RPC extension and merge it into the RPC module.
 ```rust
@@ -209,4 +210,4 @@ where
     module.merge(Betting::new(client).into_rpc())?;
     Ok(module)
 }
-``` -->
+``` 
