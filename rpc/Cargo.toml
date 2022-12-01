@@ -29,6 +29,7 @@ sp-runtime = { default-features = false, version = "6.0.0", git = "https://githu
 pallet-betting-rpc-runtime-api = { path = "./runtime-api", default-features = false }
 
 [dev-dependencies]
+pallet-betting = { version = "0.0.3", path = ".." }
 assert_matches = "1.3.0"
 tokio = "1.17.0"
 lazy_static = "1.4.0"

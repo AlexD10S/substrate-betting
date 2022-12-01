@@ -92,13 +92,13 @@ pub mod pallet {
 		pallet_prelude::*,
 		sp_runtime::{
             traits::{
-                AccountIdConversion, SaturatedConversion
+                AccountIdConversion
             },
         },
 		traits::{ReservableCurrency},
 		PalletId
 	};
-	use sp_arithmetic::{Perquintill};
+	use sp_arithmetic::{Perbill};
 	use frame_system::pallet_prelude::*;
 
 	/// TODO: #[pallet::without_storage_info] line added after error:
@@ -198,9 +198,9 @@ pub mod pallet {
         ///
         /// **Parameters:**
         ///   * `origin` – Origin for the call. Must be signed.
-        ///   * `team1` – name of the first team.
-        ///   * `team2` – name of the second team.
-        ///   * `start` – time when the match starts and a bet can not be placed (in blocks).
+        ///   * `team1` – Name of the first team.
+        ///   * `team2` – Name of the second team.
+        ///   * `start` – Time when the match starts and a bet can not be placed (in blocks).
         ///   * `lenght` – Duration of the match (in blocks).
         ///
         /// **Errors:**
@@ -224,9 +224,6 @@ pub mod pallet {
 			// Check time start and time length are valid
 			let current_block_number = <frame_system::Pallet<T>>::block_number();
 			ensure!(current_block_number < (start + length), Error::<T>::TimeMatchOver);
-
-			//TODO: Check if match: team1 vs team2 exists?
-			//TODO: Deposit to create match?
 
 			// Initialize the bets bounded_vec
 			let bets: BoundedVec<Bet<T::AccountId, MatchResult, BalanceOf<T>,>, T::MaxBetsPerMatch> = Default::default();
@@ -254,14 +251,15 @@ pub mod pallet {
         ///   * `origin` – Origin for the call. Must be signed.
         ///   * `match_id` – Id of the match, in our case the creator of the bet accountId .
         ///   * `amount_to_bet` – Amount placed for the bet.
-        ///   * `result` – the result for the bet.
+        ///   * `result` – The result for the bet.
         ///
         /// **Errors:**
         ///   * `MatchDoesNotExists` – A match selected for the bet doesn't exist.
 		///   * `MatchHasStarted` – If the match has started, betting is not allowed.
 		///   * `TimeMatchOver` – The match is created when the match time is over.
-		///   * `MaxBets`   - The match has reach its betting limit
-		///   * `AlreadyBet`   - You already place the same bet in that match
+		///   * `MaxBets`   - The match has reach its betting limit.
+		///   * `AlreadyBet`   - You already place the same bet in that match.
+		// #[pallet::weight(10_000 + T::DbWeight::get().writes(1).ref_time())]
 		#[pallet::weight(10_000 + T::DbWeight::get().writes(1).ref_time())]
 		pub fn bet(
 			origin: OriginFor<T>, 
@@ -315,7 +313,7 @@ pub mod pallet {
         /// **Parameters:**
         ///   * `origin` – Origin for the call. Must be signed.
         ///   * `match_id` – Id of the match, in our case the creator of the bet accountId .
-        ///   * `result` – the result for the match.
+        ///   * `result` – The result of match.
         ///
         /// **Errors:**
         ///   * `MatchDoesNotExists` – A match selected for the bet doesn't exist.
@@ -348,7 +346,6 @@ pub mod pallet {
 		}
 
 		/// When a match ends someone the owner of the match can distribute the money from the winers and delete the match .
-        /// Emit an event on success: `WinningsDistributed`.
         ///
         /// **Parameters:**
         ///   * `origin` – Origin for the call. Must be signed.
@@ -379,12 +376,10 @@ pub mod pallet {
 			}
 			//Share the money
 			for winner_bet in &winners {
-				let amount_winner = winner_bet.amount.saturated_into::<u128>();
-				let total_winners_in_u64 = total_winners.saturated_into::<u128>();
-				let weighted = Perquintill::from_rational(amount_winner, total_winners_in_u64);
-				let amount_won = weighted.mul_floor(total_bet.saturated_into::<u128>());
+				let weighted = Perbill::from_rational(winner_bet.amount, total_winners);
+				let amount_won = weighted * total_bet;
 				
-				T::Currency::transfer(&T::account_id(), &winner_bet.bettor, amount_won.saturated_into(), KeepAlive)?;
+				T::Currency::transfer(&T::account_id(), &winner_bet.bettor, amount_won, KeepAlive)?;
 			}
 
 			// Return a successful DispatchResultWithPostInfo

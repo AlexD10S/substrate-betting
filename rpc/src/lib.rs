@@ -1,4 +1,5 @@
 pub use pallet_betting_rpc_runtime_api::BettingApi as BettingRuntimeApi;
+use codec::Codec;
 use jsonrpsee::{
 	core::{Error as JsonRpseeError, RpcResult},
 	proc_macros::rpc,
@@ -6,6 +7,7 @@ use jsonrpsee::{
 };
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
+use sp_runtime::traits::MaybeDisplay;
 use sp_runtime::{generic::BlockId, traits::Block as BlockT};
 use std::sync::Arc;
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -17,9 +19,9 @@ pub struct Custom {
 mod tests;
 
 #[rpc(client, server)]
-pub trait BettingApi<BlockHash> {
-	#[method(name = "betting_getMatches")]
-	fn get_matches(&self, at: Option<BlockHash>) -> RpcResult<Custom>;
+pub trait BettingApi<BlockHash,AccountId, Match> {
+	#[method(name = "betting_getMatch")]
+	fn get_match(&self, match_id: AccountId, at: Option<BlockHash>) -> RpcResult<Match>;
 }
 
 /// A struct that implements the `BettingApi`.
@@ -37,18 +39,19 @@ impl<C, Block> BettingPallet<C, Block> {
 	}
 }
 
-impl<C, Block> BettingApiServer<<Block as BlockT>::Hash> for BettingPallet<C, Block>
+impl<C, Block, AccountId, Match> BettingApiServer<<Block as BlockT>::Hash, AccountId, Match> for BettingPallet<C, Block>
 where
-	Block: BlockT,
+	Block: sp_runtime::traits::Block,
 	C: Send + Sync + 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
-	C::Api: BettingRuntimeApi<Block>,
+	C::Api: BettingRuntimeApi<Block, AccountId, Match>,
+	AccountId: Codec + MaybeDisplay + Copy + Send + Sync + 'static,
+    Match: Codec + MaybeDisplay + Copy + Send + Sync + 'static,
 {
-	fn get_matches(&self, at: Option<<Block as BlockT>::Hash>) -> RpcResult<Custom> {
+	fn get_match(&self, match_id: AccountId, at: Option<Block::Hash>) -> RpcResult<Match> {
 		let api = self.client.runtime_api();
 		let at = BlockId::hash(at.unwrap_or_else(||self.client.info().best_hash));
 
-		let value = api.get_matches(&at).map_err(runtime_error_into_rpc_err);
-		Ok(Custom{ code: 200, sum: value.unwrap()})
+		api.get_match(&at, match_id).map_err(runtime_error_into_rpc_err)
 	}
 }
 
