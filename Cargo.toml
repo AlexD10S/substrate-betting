@@ -20,6 +20,8 @@ frame-system = { default-features = false, version = "4.0.0-dev", git = "https:/
 scale-info = { version = "2.1.1", default-features = false, features = ["derive"] }
 sp-std = { default-features = false, version = "4.0.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.33" }
 sp-arithmetic = { version = "5.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.33" }
+sp-io = { default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.33" }
+sp-runtime = { default-features = false, version = "6.0.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.33" }
 
 [dev-dependencies]
 pallet-balances = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.33" }
@@ -33,6 +35,8 @@ std = [
 	"codec/std",
 	"scale-info/std",
 	"sp-std/std",
+	"sp-io/std",
+	"sp-runtime/std",
 	"frame-benchmarking/std",
 	"frame-support/std",
 	"frame-system/std",

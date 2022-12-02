@@ -31,6 +31,30 @@ fn creates_a_match() {
 }
 
 #[test]
+fn error_creating_same_match() {
+    new_test_ext().execute_with(|| {
+        assert_ok!(Betting::create_match_to_bet(
+            RuntimeOrigin::signed(1),
+            "team1".as_bytes().to_vec(),
+            "team2".as_bytes().to_vec(),
+            10,
+            10
+        ));
+        // Do not allow other user to create a match with same specs of a previous one.
+        assert_noop!(
+            Betting::create_match_to_bet(
+                RuntimeOrigin::signed(2),
+                "team1".as_bytes().to_vec(),
+                "team2".as_bytes().to_vec(),
+                10,
+                10
+            ),
+            Error::<Test>::MatchAlreadyExists
+        );
+    });
+}
+
+#[test]
 fn error_creating_a_match_with_an_open_match() {
     new_test_ext().execute_with(|| {
         assert_ok!(Betting::create_match_to_bet(

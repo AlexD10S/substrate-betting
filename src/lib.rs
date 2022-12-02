@@ -21,6 +21,8 @@ use frame_support::{
 pub use pallet::*;
 use scale_info::TypeInfo;
 use sp_std::{cmp::Ordering, prelude::*};
+use sp_io::hashing::blake2_256;
+use sp_runtime::traits::TrailingZeroInput;
 
 type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 type BalanceOf<T> =
@@ -147,6 +149,18 @@ pub mod pallet {
         OptionQuery,
     >;
 
+    // The set of all match hashes.
+    // (hash -> owner)
+    #[pallet::storage]
+    #[pallet::getter(fn get_match_hashes)]
+    pub type MatchHashes<T: Config> = StorageMap<
+        _,
+        Twox64Concat,
+        T::Hash,
+        T::AccountId,
+        OptionQuery,
+    >;
+
     // The set of open matches.
     #[pallet::storage]
     #[pallet::getter(fn get_results)]
@@ -206,8 +220,8 @@ pub mod pallet {
         ///   * `origin` – Origin for the call. Must be signed.
         ///   * `team1` – Name of the first team.
         ///   * `team2` – Name of the second team.
-        ///   * `start` – Time when the match starts and a bet can not be placed (in blocks).
-        ///   * `lenght` – Duration of the match (in blocks).
+        ///   * `start` – Time when the match starts and bets can be placed (in blocks).
+        ///   * `length` – Duration of the match (in blocks).
         ///
         /// **Errors:**
         ///   * `MatchAlreadyExists` – A match for the specified values already exists.
@@ -225,12 +239,14 @@ pub mod pallet {
             // This function will return an error if the extrinsic is not signed.
             // https://docs.substrate.io/main-docs/build/origins/
             let who = ensure_signed(origin)?;
-            // Check account has not an open match
+
+            // Check account has no open match
             ensure!(
                 !<Matches<T>>::contains_key(&who),
                 Error::<T>::OriginHasAlreadyOpenMatch
             );
-            // Check time start and time length are valid
+
+            // Check if start and length are valid
             let current_block_number = <frame_system::Pallet<T>>::block_number();
             ensure!(
                 current_block_number < (start + length),
@@ -251,6 +267,17 @@ pub mod pallet {
                 team2: team2_bounded_name.clone(),
                 bets: Default::default(),
             };
+
+            let match_hash = Self::get_match_hash(betting_match.clone());
+
+            // Check if match already exists by checking its specs hash.
+            ensure!(
+                !<MatchHashes<T>>::contains_key(&match_hash),
+                Error::<T>::MatchAlreadyExists
+            );
+
+            // Store the match hash with its creator account.
+            <MatchHashes<T>>::insert(&match_hash, who.clone());
 
             // Store the betting match in the list of open matches
             <Matches<T>>::insert(&who, betting_match);
@@ -407,6 +434,18 @@ pub mod pallet {
 
             // Return a successful DispatchResult
             Ok(())
+        }
+    }
+
+    impl<T: Config> Pallet<T> {
+        pub fn get_match_hash(
+            betting_match: Match<T::BlockNumber, TeamName<T>, Bets<T>>,
+        ) -> T::Hash {
+            let entropy = (
+                betting_match.team1, betting_match.team2, betting_match.start, betting_match.length
+            ).using_encoded(blake2_256);
+            Decode::decode(&mut TrailingZeroInput::new(entropy.as_ref()))
+                .expect("infinite length input; no invalid inputs for type; qed")
         }
     }
 }
