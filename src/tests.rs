@@ -139,7 +139,7 @@ fn error_betting_a_match_does_not_exist() {
                 100,
                 MatchResult::Team1Victory
             ),
-            Error::<Test>::MatchDoesNotExists
+            Error::<Test>::MatchDoesNotExist
         );
     });
 }
@@ -449,7 +449,7 @@ fn error_distribute_winnings_no_match() {
 
         assert_noop!(
             Betting::distribute_winnings(RuntimeOrigin::signed(3)),
-            Error::<Test>::MatchDoesNotExists
+            Error::<Test>::MatchDoesNotExist
         );
     });
 }

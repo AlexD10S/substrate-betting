@@ -20,9 +20,9 @@ use frame_support::{
 };
 pub use pallet::*;
 use scale_info::TypeInfo;
-use sp_std::{cmp::Ordering, prelude::*};
 use sp_io::hashing::blake2_256;
 use sp_runtime::traits::TrailingZeroInput;
+use sp_std::{cmp::Ordering, prelude::*};
 
 type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 type BalanceOf<T> =
@@ -45,9 +45,9 @@ pub enum MatchResult {
 pub struct Bet<AccountId, MatchResult, Balance> {
     /// Account of the better.
     bettor: AccountId,
-    /// Amount bet.
+    /// Bet amount.
     amount: Balance,
-    /// Result he picked
+    /// Result predicted.
     result: MatchResult,
 }
 
@@ -77,13 +77,13 @@ where
 pub struct Match<BlockNumber, TeamName, Bets> {
     /// Starting block of the match.
     start: BlockNumber,
-    /// Length of the match (start + length = end).,s
+    /// Length of the match (start + length = end).
     length: BlockNumber,
-    /// Team1 name
+    /// Team1 name.
     team1: TeamName,
-    /// Team2 name
+    /// Team2 name.
     team2: TeamName,
-    /// Array with the bets
+    /// List of bets.
     bets: Bets,
 }
 
@@ -104,7 +104,7 @@ pub mod pallet {
     /// Configure the pallet by specifying the parameters and types on which it depends.
     #[pallet::config]
     pub trait Config: frame_system::Config {
-        /// The Betting's pallet id
+        /// The Betting's pallet id.
         #[pallet::constant]
         type PalletId: Get<PalletId>;
 
@@ -118,7 +118,7 @@ pub mod pallet {
         #[pallet::constant]
         type MaxTeamNameLength: Get<u32>;
 
-        /// Number of the max amount of bets a match can have.
+        /// Max number of bets a match can have.
         #[pallet::constant]
         type MaxBetsPerMatch: Get<u32>;
     }
@@ -138,7 +138,7 @@ pub mod pallet {
         }
     }
 
-    // The set of open matches.
+    // Mapping of open matches.
     #[pallet::storage]
     #[pallet::getter(fn get_matches)]
     pub type Matches<T: Config> = StorageMap<
@@ -149,19 +149,14 @@ pub mod pallet {
         OptionQuery,
     >;
 
-    // The set of all match hashes.
+    // Mapping of all match hashes.
     // (hash -> owner)
     #[pallet::storage]
     #[pallet::getter(fn get_match_hashes)]
-    pub type MatchHashes<T: Config> = StorageMap<
-        _,
-        Twox64Concat,
-        T::Hash,
-        T::AccountId,
-        OptionQuery,
-    >;
+    pub type MatchHashes<T: Config> =
+        StorageMap<_, Twox64Concat, T::Hash, T::AccountId, OptionQuery>;
 
-    // The set of open matches.
+    // Mapping of open match results.
     #[pallet::storage]
     #[pallet::getter(fn get_results)]
     pub type MatchResults<T: Config> =
@@ -182,7 +177,7 @@ pub mod pallet {
         ),
         /// A new bet has been created. [matchId, who, amount, result]
         BetPlaced(T::AccountId, T::AccountId, BalanceOf<T>, MatchResult),
-        // A match result has been set
+        /// A match result has been set. [matchId, result]
         MatchResult(T::AccountId, MatchResult),
     }
 
@@ -196,7 +191,7 @@ pub mod pallet {
         /// The time of the match is over.
         TimeMatchOver,
         /// The match where the bet is placed does not exist
-        MatchDoesNotExists,
+        MatchDoesNotExist,
         /// No allowing betting if the match has started
         MatchHasStarted,
         /// The match has reach its betting limit
@@ -290,6 +285,7 @@ pub mod pallet {
                 start,
                 length,
             ));
+
             // Return a successful DispatchResult
             Ok(())
         }
@@ -304,7 +300,7 @@ pub mod pallet {
         ///   * `result` – The result for the bet.
         ///
         /// **Errors:**
-        ///   * `MatchDoesNotExists` – A match selected for the bet doesn't exist.
+        ///   * `MatchDoesNotExist` – A match selected for the bet doesn't exist.
         ///   * `MatchHasStarted` – If the match has started, betting is not allowed.
         ///   * `TimeMatchOver` – The match is created when the match time is over.
         ///   * `MaxBets`   - The match has reach its betting limit.
@@ -319,9 +315,10 @@ pub mod pallet {
         ) -> DispatchResult {
             // Check that the extrinsic was signed and get the signer.
             let who = ensure_signed(origin)?;
-            //Find the match where user wants to place the bet
+
+            // Find the match that user wants to place the bet
             let mut match_to_bet =
-                <Matches<T>>::get(&match_id).ok_or(Error::<T>::MatchDoesNotExists)?;
+                <Matches<T>>::get(&match_id).ok_or(Error::<T>::MatchDoesNotExist)?;
 
             let current_block_number = <frame_system::Pallet<T>>::block_number();
             ensure!(
@@ -329,13 +326,13 @@ pub mod pallet {
                 Error::<T>::MatchHasStarted
             );
 
-            //Create the bet to be placed
+            // Create the bet to be placed
             let bet = Bet {
                 bettor: who.clone(),
                 amount: amount_to_bet.clone(),
                 result,
             };
-            // let new_match_to_bet = &match_to_bet;
+
             match match_to_bet.bets.binary_search(&bet) {
                 Ok(_pos) => return Err(Error::<T>::AlreadyBet.into()),
                 Err(pos) => match_to_bet
@@ -343,29 +340,32 @@ pub mod pallet {
                     .try_insert(pos, bet.clone())
                     .map_err(|_| Error::<T>::MaxBets)?,
             }
-            // Store the betting match in the list of open matches
-            <Matches<T>>::insert(&match_id, match_to_bet);
+
             // Check user has enough funds and send it to the betting pallet account.
             T::Currency::transfer(&who, &T::account_id(), amount_to_bet, KeepAlive)?;
 
+            // Store the betting match in the list of open matches
+            <Matches<T>>::insert(&match_id, match_to_bet);
+
             // Emit an event.
             Self::deposit_event(Event::BetPlaced(match_id, who, amount_to_bet, result));
+
             // Return a successful DispatchResult
             Ok(())
         }
 
-        /// Notify the result of an existing match.
+        /// Set the result of an existing match.
         /// The dispatch origin for this call must be _Root_.
         ///
         /// Emit an event on success: `MatchResult`.
         ///
         /// **Parameters:**
-        ///   * `origin` – Origin for the call. Must be signed.
+        ///   * `origin` – Origin for the call. Must be _Root_.
         ///   * `match_id` – Id of the match, in our case the creator of the bet accountId .
         ///   * `result` – The result of match.
         ///
         /// **Errors:**
-        ///   * `MatchDoesNotExists` – A match selected for the bet doesn't exist.
+        ///   * `MatchDoesNotExist` – A match selected for the bet doesn't exist.
         ///   * `TimeMatchNotOver` – If the match is not over, set the result is not allowed.
         #[pallet::weight(10_000 + T::DbWeight::get().writes(1).ref_time())]
         pub fn set_result(
@@ -373,13 +373,14 @@ pub mod pallet {
             match_id: T::AccountId,
             match_result: MatchResult,
         ) -> DispatchResult {
-            // Only root can call this extrinic.
+            // Only root can call this extrinsic.
             ensure_root(origin)?;
+
             //Find the match where user wants to place the bet
             let match_to_set_result =
-                <Matches<T>>::get(&match_id).ok_or(Error::<T>::MatchDoesNotExists)?;
+                <Matches<T>>::get(&match_id).ok_or(Error::<T>::MatchDoesNotExist)?;
 
-            // Check time start and time length are valid
+            // Check if start and length are valid
             let current_block_number = <frame_system::Pallet<T>>::block_number();
             ensure!(
                 current_block_number > (match_to_set_result.start + match_to_set_result.length),
@@ -391,29 +392,32 @@ pub mod pallet {
 
             // Emit an event.
             Self::deposit_event(Event::MatchResult(match_id, match_result));
+
             // Return a successful DispatchResult
             Ok(())
         }
 
-        /// When a match ends someone the owner of the match can distribute the money from the winers and delete the match .
+        /// When a match ends the owner of the match can distribute funds to the winners and delete the match.
         ///
         /// **Parameters:**
         ///   * `origin` – Origin for the call. Must be signed.
         ///
         /// **Errors:**
-        ///   * `MatchDoesNotExists` – A match selected for the bet doesn't exist.
+        ///   * `MatchDoesNotExist` – A match selected for the bet doesn't exist.
         ///   * `MatchNotResult` – The match still has not a result.
         #[pallet::weight(10_000 + T::DbWeight::get().writes(1).ref_time())]
         pub fn distribute_winnings(origin: OriginFor<T>) -> DispatchResult {
             // Check that the extrinsic was signed and get the signer.
             let who = ensure_signed(origin)?;
-            //Find the match where user wants to place the bet an delete it
-            let mut match_to_bet =
-                <Matches<T>>::take(&who).ok_or(Error::<T>::MatchDoesNotExists)?;
-            //Find the result of the match the bet an delete it
+
+            // Get the match that user wants to close, deleting it
+            let mut match_to_bet = <Matches<T>>::take(&who).ok_or(Error::<T>::MatchDoesNotExist)?;
+
+            // Get the result of the match, deleting it
             let result_match_to_bet =
                 <MatchResults<T>>::take(&who).ok_or(Error::<T>::MatchNotResult)?;
-            //Check the bets from the array
+
+            // Iterate over all bets
             let mut total_winners: BalanceOf<T> = 0u32.into();
             let mut total_bet: BalanceOf<T> = 0u32.into();
             let mut winners = Vec::new();
@@ -424,11 +428,11 @@ pub mod pallet {
                     winners.push(bet)
                 }
             }
-            //Share the money
+
+            // Distribute funds
             for winner_bet in &winners {
                 let weighted = Perbill::from_rational(winner_bet.amount, total_winners);
                 let amount_won = weighted * total_bet;
-
                 T::Currency::transfer(&T::account_id(), &winner_bet.bettor, amount_won, KeepAlive)?;
             }
 
@@ -438,12 +442,20 @@ pub mod pallet {
     }
 
     impl<T: Config> Pallet<T> {
+        /// Returns a hash of match specs.
+        ///
+        /// **Parameters:**
+        ///   * `betting_match` – Match specs.
         pub fn get_match_hash(
             betting_match: Match<T::BlockNumber, TeamName<T>, Bets<T>>,
         ) -> T::Hash {
             let entropy = (
-                betting_match.team1, betting_match.team2, betting_match.start, betting_match.length
-            ).using_encoded(blake2_256);
+                betting_match.team1,
+                betting_match.team2,
+                betting_match.start,
+                betting_match.length,
+            )
+                .using_encoded(blake2_256);
             Decode::decode(&mut TrailingZeroInput::new(entropy.as_ref()))
                 .expect("infinite length input; no invalid inputs for type; qed")
         }

@@ -54,7 +54,7 @@ Emit an event on success: `BetPlaced`.
   * `result` – The result for the bet.
 
 #### Errors:
-  * `MatchDoesNotExists` – A match selected for the bet doesn't exist.
+  * `MatchDoesNotExist` – A match selected for the bet doesn't exist.
   * `OriginHasAlreadyOpenMatch` – If the match has started, betting is not allowed.
   * `TimeMatchOver` – The match is created when the match time is over.
   * `MaxBets` – The match has reach its betting limit.
@@ -74,7 +74,7 @@ Emit an event on success: `MatchResult`.
   * `result` – The result of the match.
 
 #### Errors:
-  * `MatchDoesNotExists` – A match selected for the bet doesn't exist.
+  * `MatchDoesNotExist` – A match selected for the bet doesn't exist.
   * `TimeMatchNotOver` –  If the match is not over, set the result is not allowed.
 </details>
 
@@ -87,7 +87,7 @@ When a match ends someone the owner of the match can distribute the money from t
   * `origin` – Origin for the call. Must be signed.
 
 #### Errors:
-  * `MatchDoesNotExists` – A match selected for the bet doesn't exist.
+  * `MatchDoesNotExist` – A match selected for the bet doesn't exist.
   * `MatchNotResult` –  The match still has not a result.
 </details>
 
