@@ -17,6 +17,7 @@ For now only the one with SUDO priviliges can set result.
 
 ### Constants
 * `PalletId` – Pallet ID. Used for account derivation.
+* `MaxTeamNameLength` – Maximum length for team names.
 * `MaxBetsPerMatch` – Maximum number of bets per match.
 
 ## Extrinsics
