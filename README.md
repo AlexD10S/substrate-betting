@@ -105,7 +105,7 @@ Get a match stored.
 ## How to add `pallet-betting` to a node
 
 :information_source: The pallet is compatible with Substrate version
-[polkadot-v0.9.33](https://github.com/paritytech/substrate/tree/polkadot-v0.9.33).
+[polkadot-v0.9.32](https://github.com/paritytech/substrate/tree/polkadot-v0.9.32).
 
 :information_source: This section is based on
 [Substrate node template](https://github.com/substrate-developer-hub/substrate-node-template/tree/main).
