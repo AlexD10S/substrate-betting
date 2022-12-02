@@ -83,6 +83,8 @@ pub struct Match<BlockNumber, TeamName, Bets> {
     team1: TeamName,
     /// Team2 name.
     team2: TeamName,
+    /// Result.
+    result: Option<MatchResult>,
     /// List of bets.
     bets: Bets,
 }
@@ -155,12 +157,6 @@ pub mod pallet {
     #[pallet::getter(fn get_match_hashes)]
     pub type MatchHashes<T: Config> =
         StorageMap<_, Twox64Concat, T::Hash, T::AccountId, OptionQuery>;
-
-    // Mapping of open match results.
-    #[pallet::storage]
-    #[pallet::getter(fn get_results)]
-    pub type MatchResults<T: Config> =
-        StorageMap<_, Twox64Concat, T::AccountId, MatchResult, OptionQuery>;
 
     // Pallets use events to inform users when important changes are made.
     // https://docs.substrate.io/main-docs/build/events-errors/
@@ -260,6 +256,7 @@ pub mod pallet {
                 length,
                 team1: team1_bounded_name.clone(),
                 team2: team2_bounded_name.clone(),
+                result: None,
                 bets: Default::default(),
             };
 
@@ -313,7 +310,7 @@ pub mod pallet {
             amount_to_bet: BalanceOf<T>,
             result: MatchResult,
         ) -> DispatchResult {
-            // Check that the extrinsic was signed and get the signer.
+            // Check that the extrinsic was signed and get the signer
             let who = ensure_signed(origin)?;
 
             // Find the match that user wants to place the bet
@@ -341,7 +338,7 @@ pub mod pallet {
                     .map_err(|_| Error::<T>::MaxBets)?,
             }
 
-            // Check user has enough funds and send it to the betting pallet account.
+            // Check user has enough funds and send it to the betting pallet account
             T::Currency::transfer(&who, &T::account_id(), amount_to_bet, KeepAlive)?;
 
             // Store the betting match in the list of open matches
@@ -377,8 +374,8 @@ pub mod pallet {
             ensure_root(origin)?;
 
             //Find the match where user wants to place the bet
-            let match_to_set_result =
-                <Matches<T>>::get(&match_id).ok_or(Error::<T>::MatchDoesNotExist)?;
+            let mut match_to_set_result =
+                <Matches<T>>::take(&match_id).ok_or(Error::<T>::MatchDoesNotExist)?;
 
             // Check if start and length are valid
             let current_block_number = <frame_system::Pallet<T>>::block_number();
@@ -387,8 +384,10 @@ pub mod pallet {
                 Error::<T>::TimeMatchNotOver
             );
 
-            // Store the result of the match
-            <MatchResults<T>>::insert(&match_id, match_result);
+            match_to_set_result.result = Some(match_result.clone());
+
+            // Store the updated match result
+            <Matches<T>>::insert(&match_id, match_to_set_result);
 
             // Emit an event.
             Self::deposit_event(Event::MatchResult(match_id, match_result));
@@ -413,9 +412,7 @@ pub mod pallet {
             // Get the match that user wants to close, deleting it
             let mut match_to_bet = <Matches<T>>::take(&who).ok_or(Error::<T>::MatchDoesNotExist)?;
 
-            // Get the result of the match, deleting it
-            let result_match_to_bet =
-                <MatchResults<T>>::take(&who).ok_or(Error::<T>::MatchNotResult)?;
+            ensure!(match_to_bet.result.is_some(), Error::<T>::MatchNotResult);
 
             // Iterate over all bets
             let mut total_winners: BalanceOf<T> = 0u32.into();
@@ -423,7 +420,7 @@ pub mod pallet {
             let mut winners = Vec::new();
             for bet in match_to_bet.bets.iter_mut() {
                 total_bet += bet.amount;
-                if bet.result == result_match_to_bet {
+                if Some(bet.result) == match_to_bet.result {
                     total_winners += bet.amount;
                     winners.push(bet)
                 }
