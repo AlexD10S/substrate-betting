@@ -10,8 +10,8 @@ use sp_runtime::traits::One;
 
 fn create_match<T: Config>(result: Option<MatchResult>) -> T::AccountId {
     let caller: T::AccountId = account("creator", 0, 0);
-    let start = frame_system::Pallet::<T>::block_number();
-    let length = T::BlockNumber::one();
+    let start = T::BlockNumber::from(5u32);
+    let length = T::BlockNumber::from(5u32);
 
     let betting_match = Match {
         start,
@@ -65,6 +65,7 @@ benchmarks! {
 
     set_result {
         let match_id = create_match::<T>(None);
+        frame_system::Pallet::<T>::set_block_number(15u32.into());
         let result = MatchResult::Team1Victory;
     }: _(RawOrigin::Root, match_id.clone(), result)
     verify {
@@ -74,7 +75,7 @@ benchmarks! {
 
     distribute_winnings {
         let match_id = create_match::<T>(Some(MatchResult::Team1Victory));
-        frame_system::Pallet::<T>::set_block_number(3u32.into());
+        frame_system::Pallet::<T>::set_block_number(15u32.into());
         let result = MatchResult::Team1Victory;
         add_bet::<T>("user1", match_id.clone(), 1, MatchResult::Team1Victory);
         add_bet::<T>("user2", match_id.clone(), 2, MatchResult::Team2Victory);
