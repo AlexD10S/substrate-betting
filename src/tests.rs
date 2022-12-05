@@ -259,22 +259,13 @@ fn distribute_winnings() {
         // With the maths there were 50 UNITS bet, 10 to the Team2 that lost and has to be shared by the rest
 
         //The first player deposit 10 and win back 12, has to have 2 UNITS more
-        assert_eq!(
-            Balances::free_balance(ensure_signed(RuntimeOrigin::signed(2)).unwrap()),
-            1000000000000002
-        );
+        assert_eq!(Balances::free_balance(2), 1000000000000002);
 
         // The second player deposit 10 and lost, has to have 10 UNITS les
-        assert_eq!(
-            Balances::free_balance(ensure_signed(RuntimeOrigin::signed(3)).unwrap()),
-            999999999999990
-        );
+        assert_eq!(Balances::free_balance(3), 999999999999990);
 
         // The third player deposit 30 and win back 37, has to have 7 UNITS more
-        assert_eq!(
-            Balances::free_balance(ensure_signed(RuntimeOrigin::signed(4)).unwrap()),
-            1000000000000007
-        );
+        assert_eq!(Balances::free_balance(4), 1000000000000007);
 
         // Check that the matches has been deleted after the distribution
         assert_eq!(Betting::get_matches(match_id), None);
