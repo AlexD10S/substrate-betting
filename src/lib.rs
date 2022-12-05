@@ -19,7 +19,7 @@ pub use weights::WeightInfo;
 
 use codec::{Decode, Encode, HasCompact, MaxEncodedLen};
 use frame_support::{
-    traits::{Currency, ExistenceRequirement::KeepAlive, Get},
+    traits::{Currency, ExistenceRequirement::AllowDeath, Get},
     BoundedVec, RuntimeDebug,
 };
 pub use pallet::*;
@@ -345,7 +345,7 @@ pub mod pallet {
             }
 
             // Check user has enough funds and send it to the betting pallet account
-            T::Currency::transfer(&who, &T::account_id(), amount_to_bet, KeepAlive)?;
+            T::Currency::transfer(&who, &T::account_id(), amount_to_bet, AllowDeath)?;
 
             // Store the betting match in the list of open matches
             <Matches<T>>::insert(&match_id, match_to_bet);
@@ -436,7 +436,7 @@ pub mod pallet {
             for winner_bet in &winners {
                 let weighted = Perbill::from_rational(winner_bet.amount, total_winners);
                 let amount_won = weighted * total_bet;
-                T::Currency::transfer(&T::account_id(), &winner_bet.bettor, amount_won, KeepAlive)?;
+                T::Currency::transfer(&T::account_id(), &winner_bet.bettor, amount_won, AllowDeath)?;
             }
 
             // Return a successful DispatchResult
