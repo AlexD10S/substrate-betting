@@ -13,6 +13,10 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+pub mod weights;
+
+pub use weights::WeightInfo;
+
 use codec::{Decode, Encode, HasCompact, MaxEncodedLen};
 use frame_support::{
     traits::{Currency, ExistenceRequirement::KeepAlive, Get},
@@ -123,6 +127,9 @@ pub mod pallet {
         /// Max number of bets a match can have.
         #[pallet::constant]
         type MaxBetsPerMatch: Get<u32>;
+
+        /// Weight information for extrinsics in this pallet.
+        type WeightInfo: WeightInfo;
     }
 
     pub trait ConfigHelper: Config {
@@ -218,7 +225,7 @@ pub mod pallet {
         ///   * `MatchAlreadyExists` – A match for the specified values already exists.
         ///   * `OriginHasAlreadyOpenMatch` – An origin can only have one match open.
         ///   * `TimeMatchOver` – The match is created when the match time is over.
-        #[pallet::weight(10_000 + T::DbWeight::get().writes(1).ref_time())]
+        #[pallet::weight(T::WeightInfo::create_match_to_bet())]
         pub fn create_match_to_bet(
             origin: OriginFor<T>,
             team1: Vec<u8>,
@@ -302,8 +309,7 @@ pub mod pallet {
         ///   * `TimeMatchOver` – The match is created when the match time is over.
         ///   * `MaxBets`   - The match has reach its betting limit.
         ///   * `AlreadyBet`   - You already place the same bet in that match.
-        // #[pallet::weight(10_000 + T::DbWeight::get().writes(1).ref_time())]
-        #[pallet::weight(10_000 + T::DbWeight::get().writes(1).ref_time())]
+        #[pallet::weight(T::WeightInfo::bet())]
         pub fn bet(
             origin: OriginFor<T>,
             match_id: T::AccountId,
@@ -364,7 +370,7 @@ pub mod pallet {
         /// **Errors:**
         ///   * `MatchDoesNotExist` – A match selected for the bet doesn't exist.
         ///   * `TimeMatchNotOver` – If the match is not over, set the result is not allowed.
-        #[pallet::weight(10_000 + T::DbWeight::get().writes(1).ref_time())]
+        #[pallet::weight(T::WeightInfo::set_result())]
         pub fn set_result(
             origin: OriginFor<T>,
             match_id: T::AccountId,
@@ -404,7 +410,7 @@ pub mod pallet {
         /// **Errors:**
         ///   * `MatchDoesNotExist` – A match selected for the bet doesn't exist.
         ///   * `MatchNotResult` – The match still has not a result.
-        #[pallet::weight(10_000 + T::DbWeight::get().writes(1).ref_time())]
+        #[pallet::weight(T::WeightInfo::distribute_winnings())]
         pub fn distribute_winnings(origin: OriginFor<T>) -> DispatchResult {
             // Check that the extrinsic was signed and get the signer.
             let who = ensure_signed(origin)?;

@@ -6,7 +6,6 @@ use super::*;
 use crate::Pallet as Betting;
 use frame_benchmarking::{account, benchmarks, whitelisted_caller};
 use frame_system::RawOrigin;
-use sp_runtime::traits::One;
 
 fn create_match<T: Config>(result: Option<MatchResult>) -> T::AccountId {
     let caller: T::AccountId = account("creator", 0, 0);
@@ -34,9 +33,14 @@ fn create_match<T: Config>(result: Option<MatchResult>) -> T::AccountId {
 
 fn add_bet<T: Config>(user: &'static str, match_id: AccountIdOf<T>, a: u32, r: MatchResult) {
     let caller = account(user, 0, 0);
-    T::Currency::make_free_balance_be(&caller, BalanceOf::<T>::from(10u32));
+    T::Currency::make_free_balance_be(&caller, T::Currency::minimum_balance() * 10u32.into());
     let origin = <T::RuntimeOrigin>::from(RawOrigin::Signed(caller));
-    let _ = Betting::<T>::bet(origin, match_id, a.into(), r);
+    let _ = Betting::<T>::bet(
+        origin,
+        match_id,
+        T::Currency::minimum_balance() * a.into(),
+        r,
+    );
 }
 
 benchmarks! {
@@ -44,8 +48,8 @@ benchmarks! {
         let caller: T::AccountId = whitelisted_caller();
         let team1 = "team1".as_bytes().to_vec();
         let team2 = "team2".as_bytes().to_vec();
-        let start = frame_system::Pallet::<T>::block_number();
-        let length = T::BlockNumber::one();
+        let start = T::BlockNumber::from(10u32);
+        let length = T::BlockNumber::from(10u32);
     }: _(RawOrigin::Signed(caller.clone()), team1, team2, start, length)
     verify {
         assert!(Matches::<T>::contains_key(&caller));
@@ -54,8 +58,8 @@ benchmarks! {
     bet {
         let match_id = create_match::<T>(None);
         let caller: T::AccountId = whitelisted_caller();
-        T::Currency::make_free_balance_be(&caller, BalanceOf::<T>::from(10u32));
-        let amount = BalanceOf::<T>::from(5u32);
+        T::Currency::make_free_balance_be(&caller, T::Currency::minimum_balance() * 10u32.into());
+        let amount = BalanceOf::<T>::from(T::Currency::minimum_balance());
         let result = MatchResult::Draw;
     }: _(RawOrigin::Signed(caller.clone()), match_id.clone(), amount, result)
     verify {

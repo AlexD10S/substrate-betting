@@ -74,6 +74,7 @@ impl pallet_betting::Config for Test {
     type RuntimeEvent = RuntimeEvent;
     type MaxTeamNameLength = ConstU32<64>;
     type MaxBetsPerMatch = ConstU32<3>;
+    type WeightInfo = ();
 }
 
 pub(crate) const ACCOUNT_A: u64 = 0;
