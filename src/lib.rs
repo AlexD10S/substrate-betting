@@ -17,6 +17,8 @@ pub mod weights;
 
 pub use weights::WeightInfo;
 
+pub mod rpc;
+
 use codec::{Decode, Encode, HasCompact, MaxEncodedLen};
 use frame_support::{
     traits::{Currency, ExistenceRequirement::AllowDeath, Get},

@@ -19,7 +19,7 @@ pub struct Custom {
 mod tests;
 
 #[rpc(client, server)]
-pub trait BettingApi<BlockHash,AccountId, Match> {
+pub trait BettingApi<BlockHash, AccountId, Match> {
 	#[method(name = "betting_getMatch")]
 	fn get_match(&self, match_id: AccountId, at: Option<BlockHash>) -> RpcResult<Match>;
 }
