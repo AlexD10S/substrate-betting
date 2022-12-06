@@ -39,8 +39,8 @@ where
 	Block: sp_runtime::traits::Block,
 	C: Send + Sync + 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
 	C::Api: BettingRuntimeApi<Block, AccountId, Match>,
-	AccountId: Codec + MaybeDisplay + Copy + Send + Sync + 'static,
-    Match: Codec + Copy + Send + Sync + 'static,
+	AccountId: Codec + MaybeDisplay + Send + Sync + 'static,
+	Match: Codec + Send + Sync + 'static,
 {
 	fn get_match(&self, match_id: AccountId, at: Option<Block::Hash>) -> RpcResult<Match> {
 		let at = BlockId::hash(at.unwrap_or_else(||self.client.info().best_hash));
