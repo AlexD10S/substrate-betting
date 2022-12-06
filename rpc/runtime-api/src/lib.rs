@@ -8,7 +8,7 @@ pub use pallet_betting::rpc::{RpcError, RpcResult};
 sp_api::decl_runtime_apis! {
     pub trait BettingApi<AccountId, Match> where
         AccountId: Codec + MaybeDisplay,
-        Match: Codec + MaybeDisplay,
+        Match: Codec,
     {
         fn get_match(match_id: AccountId) -> RpcResult<Match>;
     }
