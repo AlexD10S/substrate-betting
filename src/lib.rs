@@ -22,7 +22,7 @@ pub mod rpc;
 use codec::{Decode, Encode, HasCompact, MaxEncodedLen};
 use frame_support::{
     traits::{Currency, ExistenceRequirement::AllowDeath, Get},
-    BoundedVec, RuntimeDebug,
+    BoundedVec,
 };
 pub use pallet::*;
 use scale_info::TypeInfo;
@@ -39,14 +39,14 @@ pub type TeamName<T> = BoundedVec<u8, <T as Config>::MaxTeamNameLength>;
 pub type Bets<T> =
     BoundedVec<Bet<AccountIdOf<T>, MatchResult, BalanceOf<T>>, <T as Config>::MaxBetsPerMatch>;
 
-#[derive(Encode, Decode, Clone, Copy, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
+#[derive(Encode, Decode, Debug, Clone, Copy, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
 pub enum MatchResult {
     Team1Victory,
     Team2Victory,
     Draw,
 }
 
-#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo)]
+#[derive(PartialEq, Eq, Clone, Encode, Debug, Decode, MaxEncodedLen, TypeInfo)]
 /// A bet.
 pub struct Bet<AccountId, MatchResult, Balance> {
     /// Account of the better.
@@ -79,7 +79,7 @@ where
     }
 }
 
-#[derive(Clone, Eq, PartialEq, Encode, Decode, Default, RuntimeDebug, MaxEncodedLen, TypeInfo)]
+#[derive(Clone, Eq, PartialEq, Encode, Decode, Default, Debug, MaxEncodedLen, TypeInfo)]
 pub struct Match<BlockNumber, TeamName, Bets> {
     /// Starting block of the match.
     start: BlockNumber,
