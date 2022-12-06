@@ -54,8 +54,8 @@ const MATCH_NOT_FOUND: i32 = 2;
 /// Converts a runtime trap into an RPC error.
 fn betting_rpc_error(err: BettingRpcError) -> RpcError {
 	let (code, message, data) = match err {
-		DexRpcError::MatchDoesNotExist => (MATCH_NOT_FOUND, "Match not found", None),
-		DexRpcError::Unexpected(msg) => (RUNTIME_ERROR, "Runtime error", Some(msg)),
+		BettingRpcError::MatchDoesNotExist => (MATCH_NOT_FOUND, "Match not found", None),
+		BettingRpcError::Unexpected(msg) => (RUNTIME_ERROR, "Runtime error", Some(msg)),
 	};
 	CallError::Custom(ErrorObject::owned(code, message, data)).into()
 }
