@@ -10,6 +10,7 @@ use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::MaybeDisplay;
 use sp_runtime::{generic::BlockId, traits::Block as BlockT};
 use std::sync::Arc;
+use std::fmt::Debug;
 use pallet_betting_rpc_runtime_api::RpcError as BettingRpcError;
 
 #[rpc(client, server)]
@@ -42,14 +43,26 @@ where
     Match: Codec + Copy + Send + Sync + 'static,
 {
 	fn get_match(&self, match_id: AccountId, at: Option<Block::Hash>) -> RpcResult<Match> {
-		let api = self.client.runtime_api();
 		let at = BlockId::hash(at.unwrap_or_else(||self.client.info().best_hash));
-		api.get_match(&at, match_id).map_err(betting_rpc_error)
+		self.client
+			.runtime_api()
+			.get_match(&at, match_id)
+			.map_err(runtime_error)?
+			.map_err(betting_rpc_error)
 	}
 }
 
 const RUNTIME_ERROR: i32 = 1;
 const MATCH_NOT_FOUND: i32 = 2;
+
+fn runtime_error(err: impl Debug) -> RpcError {
+	CallError::Custom(ErrorObject::owned(
+		RUNTIME_ERROR,
+		"Runtime error",
+		Some(format!("{:?}", err)),
+	))
+		.into()
+}
 
 /// Converts a runtime trap into an RPC error.
 fn betting_rpc_error(err: BettingRpcError) -> RpcError {

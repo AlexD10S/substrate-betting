@@ -23,9 +23,6 @@ impl<T: Config> From<Error<T>> for RpcError {
 
 impl<T: Config> Pallet<T> {
     pub fn get_match(match_id: T::AccountId) -> RpcResult<Match<T::BlockNumber, TeamName<T>, Bets<T>>> {
-        match Self::get_matches(match_id) {
-            Some(m) => Ok(m),
-            None => Err(RpcError::MatchDoesNotExist)
-        }
+        Self::get_matches(match_id).ok_or(RpcError::MatchDoesNotExist)
     }
 }
