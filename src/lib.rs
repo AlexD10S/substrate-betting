@@ -39,6 +39,7 @@ pub type TeamName<T> = BoundedVec<u8, <T as Config>::MaxTeamNameLength>;
 pub type Bets<T> =
     BoundedVec<Bet<AccountIdOf<T>, MatchResult, BalanceOf<T>>, <T as Config>::MaxBetsPerMatch>;
 
+#[derive(serde::Deserialize, serde::Serialize)]
 #[derive(Encode, Decode, Clone, Copy, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 pub enum MatchResult {
     Team1Victory,
@@ -46,6 +47,7 @@ pub enum MatchResult {
     Draw,
 }
 
+#[derive(serde::Deserialize, serde::Serialize)]
 #[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 /// A bet.
 pub struct Bet<AccountId, MatchResult, Balance> {
@@ -79,6 +81,7 @@ where
     }
 }
 
+#[derive(serde::Deserialize, serde::Serialize)]
 #[derive(Clone, Eq, PartialEq, Encode, Decode, Default, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 pub struct Match<BlockNumber, TeamName, Bets> {
     /// Starting block of the match.
