@@ -5,7 +5,9 @@
 This pallet implements a basic protocol for decentralized betting.
 
 Every account can go an create a match and everyone can bet in that match, for a basic result: victory team 1, draw or victory team 2.
+
 For now only the one with SUDO priviliges can set result.
+![Diagram](assets/diagram.png)
 
 :warning: It is **not a production-ready paller**, but a sample built for learning purposes. It is discouraged to use this code 'as-is' in a production runtime.
 
@@ -14,6 +16,7 @@ For now only the one with SUDO priviliges can set result.
 ### Types
 * `RuntimeEvent` – The overarching event type.
 * `Currency` – The currency type.
+* `WeightInfo` – Information on runtime weights.
 
 ### Constants
 * `PalletId` – Pallet ID. Used for account derivation.

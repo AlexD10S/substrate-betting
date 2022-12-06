@@ -15,8 +15,6 @@ pub struct Custom {
 	code: u32,
 	sum: u32,
 }
-#[cfg(test)]
-mod tests;
 
 #[rpc(client, server)]
 pub trait BettingApi<BlockHash,AccountId, Match> {
