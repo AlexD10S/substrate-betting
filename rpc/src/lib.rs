@@ -1,7 +1,7 @@
 pub use pallet_betting_rpc_runtime_api::BettingApi as BettingRuntimeApi;
 use codec::Codec;
 use jsonrpsee::{
-	core::{Error as JsonRpseeError, RpcResult},
+	core::{Error as RpcError, RpcResult},
 	proc_macros::rpc,
 	types::error::{CallError, ErrorObject},
 };
@@ -59,7 +59,7 @@ const RUNTIME_ERROR: i32 = 1;
 
 
 /// Converts a runtime trap into an RPC error.
-fn runtime_error_into_rpc_err(err: impl std::fmt::Debug) -> JsonRpseeError {
+fn runtime_error_into_rpc_err(err: impl std::fmt::Debug) -> RpcError {
 	CallError::Custom(ErrorObject::owned(
 		RUNTIME_ERROR,
 		"Runtime error",
