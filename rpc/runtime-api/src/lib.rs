@@ -1,7 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 use codec::Codec;
 use sp_runtime::traits::MaybeDisplay;
-use jsonrpsee::code::RpcResult;
+use jsonrpsee::core::RpcResult;
 
 // Here we declare the runtime API. It is implemented it the `impl` block in
 // runtime file (the `runtime/src/lib.rs`)
