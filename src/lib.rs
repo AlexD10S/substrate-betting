@@ -17,6 +17,8 @@ pub mod weights;
 
 pub use weights::WeightInfo;
 
+pub mod rpc;
+
 use codec::{Decode, Encode, HasCompact, MaxEncodedLen};
 use frame_support::{
     traits::{Currency, ExistenceRequirement::AllowDeath, Get},
@@ -37,6 +39,7 @@ pub type TeamName<T> = BoundedVec<u8, <T as Config>::MaxTeamNameLength>;
 pub type Bets<T> =
     BoundedVec<Bet<AccountIdOf<T>, MatchResult, BalanceOf<T>>, <T as Config>::MaxBetsPerMatch>;
 
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Encode, Decode, Clone, Copy, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 pub enum MatchResult {
     Team1Victory,
@@ -44,6 +47,7 @@ pub enum MatchResult {
     Draw,
 }
 
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 #[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 /// A bet.
 pub struct Bet<AccountId, MatchResult, Balance> {
@@ -77,6 +81,7 @@ where
     }
 }
 
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Eq, PartialEq, Encode, Decode, Default, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 pub struct Match<BlockNumber, TeamName, Bets, BalanceOf> {
     /// Starting block of the match.
