@@ -5,7 +5,9 @@
 This pallet implements a basic protocol for decentralized betting.
 
 Every account can go an create a match and everyone can bet in that match, for a basic result: victory team 1, draw or victory team 2.
+
 For now only the one with SUDO priviliges can set result.
+![Diagram](assets/diagram.png)
 
 :warning: It is **not a production-ready paller**, but a sample built for learning purposes. It is discouraged to use this code 'as-is' in a production runtime.
 
@@ -14,10 +16,12 @@ For now only the one with SUDO priviliges can set result.
 ### Types
 * `RuntimeEvent` – The overarching event type.
 * `Currency` – The currency type.
+* `WeightInfo` – Information on runtime weights.
 
 ### Constants
 * `PalletId` – Pallet ID. Used for account derivation.
 * `MaxTeamNameLength` – Maximum length for team names.
+* `MatchDeposit` - Deposite needed to create a match
 * `MaxBetsPerMatch` – Maximum number of bets per match.
 
 ## Extrinsics
@@ -158,6 +162,7 @@ Configure the betting pallet.
 ```rust
 
 parameter_types! {
+    pub const MatchDeposit: u64 = 10;
     pub const BettingPalletId: PalletId = PalletId(*b"py/betts");
 }
 
@@ -166,6 +171,7 @@ impl pallet_betting::Config for Runtime {
     type PalletId = BettingPalletId;
     type Currency = Balances;
     type MaxBetsPerMatch = ConstU32<10>;
+    type MatchDeposit = MatchDeposit;
 }
 ```
 

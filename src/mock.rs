@@ -65,6 +65,7 @@ impl system::Config for Test {
 }
 
 parameter_types! {
+    pub const MatchDeposit: u64 = 10;
     pub const BettingPalletId: PalletId = PalletId(*b"bet_mock");
 }
 
@@ -74,6 +75,7 @@ impl pallet_betting::Config for Test {
     type RuntimeEvent = RuntimeEvent;
     type MaxTeamNameLength = ConstU32<64>;
     type MaxBetsPerMatch = ConstU32<3>;
+    type MatchDeposit = MatchDeposit;
     type WeightInfo = ();
 }
 
