@@ -21,6 +21,7 @@ For now only the one with SUDO priviliges can set result.
 ### Constants
 * `PalletId` – Pallet ID. Used for account derivation.
 * `MaxTeamNameLength` – Maximum length for team names.
+* `MatchDeposit` - Deposite needed to create a match
 * `MaxBetsPerMatch` – Maximum number of bets per match.
 
 ## Extrinsics
@@ -161,6 +162,7 @@ Configure the betting pallet.
 ```rust
 
 parameter_types! {
+    pub const MatchDeposit: u64 = 10;
     pub const BettingPalletId: PalletId = PalletId(*b"py/betts");
 }
 
@@ -169,6 +171,7 @@ impl pallet_betting::Config for Runtime {
     type PalletId = BettingPalletId;
     type Currency = Balances;
     type MaxBetsPerMatch = ConstU32<10>;
+    type MatchDeposit = MatchDeposit;
 }
 ```
 

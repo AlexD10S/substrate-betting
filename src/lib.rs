@@ -78,7 +78,7 @@ where
 }
 
 #[derive(Clone, Eq, PartialEq, Encode, Decode, Default, RuntimeDebug, MaxEncodedLen, TypeInfo)]
-pub struct Match<BlockNumber, TeamName, Bets> {
+pub struct Match<BlockNumber, TeamName, Bets, BalanceOf> {
     /// Starting block of the match.
     start: BlockNumber,
     /// Length of the match (start + length = end).
@@ -91,6 +91,9 @@ pub struct Match<BlockNumber, TeamName, Bets> {
     result: Option<MatchResult>,
     /// List of bets.
     bets: Bets,
+    /// The amount held in reserve of the `depositor`,
+	/// To be returned once this recovery process is closed.
+	deposit: BalanceOf,
 }
 
 #[frame_support::pallet]
@@ -128,6 +131,13 @@ pub mod pallet {
         #[pallet::constant]
         type MaxBetsPerMatch: Get<u32>;
 
+        /// The base amount of currency needed to reserve for creating a match.
+		///
+		/// This is held for an additional storage item whose value size is
+		/// `2 + sizeof(BlockNumber, Balance)` bytes.
+		#[pallet::constant]
+		type MatchDeposit: Get<BalanceOf<Self>>;
+
         /// Weight information for extrinsics in this pallet.
         type WeightInfo: WeightInfo;
     }
@@ -154,7 +164,7 @@ pub mod pallet {
         _,
         Twox64Concat,
         T::AccountId,
-        Match<T::BlockNumber, TeamName<T>, Bets<T>>,
+        Match<T::BlockNumber, TeamName<T>, Bets<T>, BalanceOf<T>>,
         OptionQuery,
     >;
 
@@ -265,6 +275,7 @@ pub mod pallet {
                 team2: team2_bounded_name.clone(),
                 result: None,
                 bets: Default::default(),
+                deposit: T::MatchDeposit::get(),
             };
 
             let match_hash = Self::get_match_hash(betting_match.clone());
@@ -274,6 +285,9 @@ pub mod pallet {
                 !<MatchHashes<T>>::contains_key(&match_hash),
                 Error::<T>::MatchAlreadyExists
             );
+
+            // Reserve the deposit
+			T::Currency::reserve(&who, T::MatchDeposit::get())?;
 
             // Store the match hash with its creator account.
             <MatchHashes<T>>::insert(&match_hash, who.clone());
@@ -439,6 +453,9 @@ pub mod pallet {
                 T::Currency::transfer(&T::account_id(), &winner_bet.bettor, amount_won, AllowDeath)?;
             }
 
+            // Unreserve the initial deposit for the recovery configuration.
+			T::Currency::unreserve(&who, match_to_bet.deposit);
+
             // Return a successful DispatchResult
             Ok(())
         }
@@ -450,7 +467,7 @@ pub mod pallet {
         /// **Parameters:**
         ///   * `betting_match` – Match specs.
         pub fn get_match_hash(
-            betting_match: Match<T::BlockNumber, TeamName<T>, Bets<T>>,
+            betting_match: Match<T::BlockNumber, TeamName<T>, Bets<T>, BalanceOf<T>>,
         ) -> T::Hash {
             let entropy = (
                 betting_match.team1,
