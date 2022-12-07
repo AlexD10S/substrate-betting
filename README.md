@@ -170,8 +170,10 @@ impl pallet_betting::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type PalletId = BettingPalletId;
     type Currency = Balances;
+    type MaxTeamNameLength = ConstU32<64>;
     type MaxBetsPerMatch = ConstU32<10>;
-    type MatchDeposit = MatchDeposit;
+	  type MatchDeposit = MatchDeposit;
+    type WeightInfo = pallet_betting::weights::SubstrateWeight<Runtime>;
 }
 ```
 
@@ -190,14 +192,17 @@ construct_runtime!(
 
 Add the RPC implementation.
 ```rust
+pub type TeamName = BoundedVec<u8, ConstU32<64>>;
+pub type Bet = pallet_betting::Bet<AccountId, pallet_betting::MatchResult, Balance>;
+pub type Match = pallet_betting::Match<BlockNumber, TeamName, BoundedVec<Bet, ConstU32<10>>, Balance>;
+
 impl_runtime_apis! {
-    // --snip--
-    impl pallet_betting_rpc_runtime_api::BettingApi<Block> for Runtime {
-      fn get_matches() ->  pallet_betting::Matches {
-        Betting::get_matches().unwrap_or({})
-      }
-    }
-}
+		impl pallet_betting_rpc_runtime_api::BettingApi<Block, AccountId, Match> for Runtime {
+			fn get_match(match_id: AccountId) -> pallet_betting_rpc_runtime_api::RpcResult<Match>
+			{
+			  Betting::get_match(match_id)
+			}
+	}
 ``` 
 
 

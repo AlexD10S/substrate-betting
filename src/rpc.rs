@@ -1,4 +1,4 @@
-use crate::{TeamName, Bets, Config, Error, Match, Pallet};
+use crate::{Bets, Config, Error, Match, Pallet, TeamName, BalanceOf};
 use codec::{Decode, Encode};
 use scale_info::prelude::format;
 use sp_std::fmt::Debug;
@@ -22,7 +22,9 @@ impl<T: Config> From<Error<T>> for RpcError {
 }
 
 impl<T: Config> Pallet<T> {
-    pub fn get_match(match_id: T::AccountId) -> RpcResult<Match<T::BlockNumber, TeamName<T>, Bets<T>>> {
+    pub fn get_match(
+        match_id: T::AccountId,
+    ) -> RpcResult<Match<T::BlockNumber, TeamName<T>, Bets<T>, BalanceOf<T>>> {
         Self::get_matches(match_id).ok_or(RpcError::MatchDoesNotExist)
     }
 }

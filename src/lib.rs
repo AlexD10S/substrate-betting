@@ -97,8 +97,8 @@ pub struct Match<BlockNumber, TeamName, Bets, BalanceOf> {
     /// List of bets.
     bets: Bets,
     /// The amount held in reserve of the `depositor`,
-	/// To be returned once this recovery process is closed.
-	deposit: BalanceOf,
+    /// To be returned once this recovery process is closed.
+    deposit: BalanceOf,
 }
 
 #[frame_support::pallet]
@@ -137,11 +137,11 @@ pub mod pallet {
         type MaxBetsPerMatch: Get<u32>;
 
         /// The base amount of currency needed to reserve for creating a match.
-		///
-		/// This is held for an additional storage item whose value size is
-		/// `2 + sizeof(BlockNumber, Balance)` bytes.
-		#[pallet::constant]
-		type MatchDeposit: Get<BalanceOf<Self>>;
+        ///
+        /// This is held for an additional storage item whose value size is
+        /// `2 + sizeof(BlockNumber, Balance)` bytes.
+        #[pallet::constant]
+        type MatchDeposit: Get<BalanceOf<Self>>;
 
         /// Weight information for extrinsics in this pallet.
         type WeightInfo: WeightInfo;
@@ -292,7 +292,7 @@ pub mod pallet {
             );
 
             // Reserve the deposit
-			T::Currency::reserve(&who, T::MatchDeposit::get())?;
+            T::Currency::reserve(&who, T::MatchDeposit::get())?;
 
             // Store the match hash with its creator account.
             <MatchHashes<T>>::insert(&match_hash, who.clone());
@@ -455,11 +455,16 @@ pub mod pallet {
             for winner_bet in &winners {
                 let weighted = Perbill::from_rational(winner_bet.amount, total_winners);
                 let amount_won = weighted * total_bet;
-                T::Currency::transfer(&T::account_id(), &winner_bet.bettor, amount_won, AllowDeath)?;
+                T::Currency::transfer(
+                    &T::account_id(),
+                    &winner_bet.bettor,
+                    amount_won,
+                    AllowDeath,
+                )?;
             }
 
             // Unreserve the initial deposit for the recovery configuration.
-			T::Currency::unreserve(&who, match_to_bet.deposit);
+            T::Currency::unreserve(&who, match_to_bet.deposit);
 
             // Return a successful DispatchResult
             Ok(())
