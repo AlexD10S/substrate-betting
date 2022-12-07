@@ -4,9 +4,15 @@
 
 This pallet implements a basic protocol for decentralized betting.
 
-Every account can go an create a match and everyone can bet in that match, for a basic result: victory team 1, draw or victory team 2.
+Every account can create a match where rest of the users can bet. To create a match it is needed to place a deposit that will be returned after distribute the prizes.
 
-For now only the one with SUDO priviliges can set result.
+The number of bets a user can create now are limited to 1.
+
+Everyone can bet in the match, for a basic result: victory team 1, draw or victory team 2.
+
+When the match is over a user with SUDO priviliges can set the result of the match.
+
+A diagram:
 ![Diagram](assets/diagram.png)
 
 :warning: It is **not a production-ready paller**, but a sample built for learning purposes. It is discouraged to use this code 'as-is' in a production runtime.
