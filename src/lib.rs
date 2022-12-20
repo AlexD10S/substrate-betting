@@ -137,9 +137,6 @@ pub mod pallet {
         type MaxBetsPerMatch: Get<u32>;
 
         /// The base amount of currency needed to reserve for creating a match.
-        ///
-        /// This is held for an additional storage item whose value size is
-        /// `2 + sizeof(BlockNumber, Balance)` bytes.
         #[pallet::constant]
         type MatchDeposit: Get<BalanceOf<Self>>;
 

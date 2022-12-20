@@ -45,14 +45,15 @@ fn add_bet<T: Config>(user: &'static str, match_id: AccountIdOf<T>, a: u32, r: M
 
 benchmarks! {
     create_match_to_bet {
+        // setup initial state
         let caller: T::AccountId = whitelisted_caller();
         let team1 = "team1".as_bytes().to_vec();
         let team2 = "team2".as_bytes().to_vec();
         let start = T::BlockNumber::from(10u32);
         let length = T::BlockNumber::from(10u32);
-    }: _(RawOrigin::Signed(caller.clone()), team1, team2, start, length)
+    }: _(RawOrigin::Signed(caller.clone()), team1, team2, start, length) //execute extrinsic or function
     verify {
-        assert!(Matches::<T>::contains_key(&caller));
+        assert!(Matches::<T>::contains_key(&caller)); //verify final state
     }
 
     bet {

@@ -92,7 +92,19 @@ Emit an event on success: `MatchResult`.
 <summary><h3>distribute_winnings</h3></summary>
 
 When a match ends someone the owner of the match can distribute the money from the winers and delete the match.
+Distribute winnings: take all the prizes on the pot and distribute the prizes evenly. 
 
+Example:
+
+Person A bets 10 UNITS on team1.
+
+Person B bets 10 UNITS on team2.
+
+Person C bets 30 UNITS on team1.
+
+The total Pot is 50 UNITS.
+
+If team1 is the winner, with weighted distribution the person A have to receive the 25% of the pot and the person C the 75%. The maths for this weighted distribution are simple: the amount that one deposit / the total amount of the winners deposit in the case of Person A = 10/40 = 0.25
 #### Parameters:
   * `origin` – Origin for the call. Must be signed.
 
