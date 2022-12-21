@@ -29,7 +29,7 @@ impl pallet_balances::Config for Test {
     type Balance = u128;
     type DustRemoval = ();
     type RuntimeEvent = RuntimeEvent;
-    type ExistentialDeposit = ConstU128<1>;
+    type ExistentialDeposit = ConstU128<2>;
     type AccountStore = System;
     type WeightInfo = ();
     type MaxLocks = ();
