@@ -7,10 +7,14 @@ use crate::Pallet as Betting;
 use frame_benchmarking::{account, benchmarks, whitelisted_caller};
 use frame_system::RawOrigin;
 
+
 fn create_match<T: Config>(result: Option<MatchResult>) -> T::AccountId {
     let caller: T::AccountId = account("creator", 0, 0);
+    T::Currency::make_free_balance_be(&caller, T::MatchDeposit::get() * T::Currency::minimum_balance() * 1000u32.into());
+
     let start = T::BlockNumber::from(5u32);
     let length = T::BlockNumber::from(5u32);
+
 
     let betting_match = Match {
         start,
@@ -21,6 +25,7 @@ fn create_match<T: Config>(result: Option<MatchResult>) -> T::AccountId {
             .unwrap(),
         result,
         bets: Default::default(),
+        deposit: T::MatchDeposit::get()
     };
 
     let match_hash = Betting::<T>::get_match_hash(betting_match.clone());
@@ -47,6 +52,7 @@ benchmarks! {
     create_match_to_bet {
         // setup initial state
         let caller: T::AccountId = whitelisted_caller();
+        T::Currency::make_free_balance_be(&caller, T::MatchDeposit::get() * T::Currency::minimum_balance() * 10u32.into());
         let team1 = "team1".as_bytes().to_vec();
         let team2 = "team2".as_bytes().to_vec();
         let start = T::BlockNumber::from(10u32);
