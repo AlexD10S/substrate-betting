@@ -15,7 +15,7 @@ When the match is over a user with SUDO priviliges can set the result of the mat
 A diagram:
 ![Diagram](assets/diagram.png)
 
-:warning: It is **not a production-ready paller**, but a sample built for learning purposes. It is discouraged to use this code 'as-is' in a production runtime.
+:warning: It is **not a production-ready pallet**, but a sample built for learning purposes. It is discouraged to use this code 'as-is' in a production runtime.
 
 ## Configuration
 
@@ -127,7 +127,7 @@ Get a match stored.
 ## How to add `pallet-betting` to a node
 
 :information_source: The pallet is compatible with Substrate version
-[polkadot-v0.9.32](https://github.com/paritytech/substrate/tree/polkadot-v0.9.32).
+[polkadot-v0.9.35](https://github.com/paritytech/substrate/tree/polkadot-v0.9.35).
 
 :information_source: This section is based on
 [Substrate node template](https://github.com/substrate-developer-hub/substrate-node-template/tree/main).
