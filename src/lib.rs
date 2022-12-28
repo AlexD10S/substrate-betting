@@ -196,6 +196,25 @@ pub mod pallet {
         MatchResult(T::AccountId, MatchResult),
     }
 
+    #[pallet::genesis_config]
+    pub struct GenesisConfig<T: Config> {
+        pub existential_deposit:  BalanceOf<T>,
+    }
+    #[cfg(feature = "std")]
+    impl<T: Config> Default for GenesisConfig<T> {
+        fn default() -> Self {
+            Self { existential_deposit: Default::default() }
+        }
+    }
+
+    #[pallet::genesis_build]
+    impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+        fn build(&self) {
+            T::Currency::deposit_creating(&T::account_id(), self.existential_deposit);
+            T::Currency::reserve(&T::account_id(),  self.existential_deposit).map_err(|_err| Error::<T>::NoExistentialDepositReserved).ok();
+        }
+    }
+
     // Errors inform users that something went wrong.
     #[pallet::error]
     pub enum Error<T> {
@@ -219,6 +238,8 @@ pub mod pallet {
         MatchNotResult,
         /// The team name is too long
         TeamNameTooLong,
+        /// Existential deposit can not be reserved at the beginning
+        NoExistentialDepositReserved,
     }
 
     #[pallet::call]
