@@ -1,5 +1,5 @@
 use crate as pallet_betting;
-use frame_support::traits::{ConstU128, ConstU16, ConstU32, ConstU64};
+use frame_support::traits::{ConstU128, ConstU16, ConstU32, ConstU64, GenesisBuild};
 use frame_support::{parameter_types, PalletId};
 use frame_system as system;
 use sp_core::H256;
@@ -102,6 +102,14 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     }
     .assimilate_storage(&mut storage)
     .unwrap();
+
+    GenesisBuild::<Test>::assimilate_storage(
+		&pallet_betting::GenesisConfig {
+			existential_deposit: 2_000_000_000_000_000,
+		},
+		&mut storage,
+	)
+	.unwrap();
 
     let mut test_ext: sp_io::TestExternalities = storage.into();
     test_ext.execute_with(|| System::set_block_number(1));

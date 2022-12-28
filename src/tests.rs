@@ -371,37 +371,38 @@ fn deposit_when_creates_match() {
     });
 }
 
-// #[test]
-// fn transfer_below_existential_deposit() {
-//     new_test_ext().execute_with(|| {
-//         let balance_before_deposit = Balances::free_balance(1);
-//         let match_id = create_match(1, "team1", "team2", 10, 10);
-//         // Check the free balance from the account has been deducted
-//         assert_eq!(Balances::free_balance(1), balance_before_deposit - 10);
-//         assert_ok!(Betting::bet(
-//             RuntimeOrigin::signed(2),
-//             match_id,
-//             9,
-//             MatchResult::Team1Victory
-//         ));
-//         assert_ok!(Betting::bet(
-//             RuntimeOrigin::signed(3),
-//             match_id,
-//             1,
-//             MatchResult::Team1Victory
-//         ));
-//         // Set the result of that match when it ends.
-//         System::set_block_number(22);
-//         assert_ok!(Betting::set_result(
-//             RawOrigin::Root.into(),
-//             match_id,
-//             MatchResult::Team1Victory
-//         ));
+#[test]
+fn transfer_below_existential_deposit() {
+    new_test_ext().execute_with(|| {
+        let balance_before_deposit = Balances::free_balance(1);
+        let match_id = create_match(1, "team1", "team2", 10, 10);
+        // Check the free balance from the account has been deducted
+        assert_eq!(Balances::free_balance(1), balance_before_deposit - 10);
+        assert_ok!(Betting::bet(
+            RuntimeOrigin::signed(2),
+            match_id,
+            9,
+            MatchResult::Team1Victory
+        ));
+        assert_ok!(Betting::bet(
+            RuntimeOrigin::signed(3),
+            match_id,
+            1,
+            MatchResult::Team1Victory
+        ));
+        // Set the result of that match when it ends.
+        System::set_block_number(22);
+        assert_ok!(Betting::set_result(
+            RawOrigin::Root.into(),
+            match_id,
+            MatchResult::Team1Victory
+        ));
 
-//         // The owner distributes the prizes
-//         assert_ok!(Betting::distribute_winnings(RuntimeOrigin::signed(1)));
+        // The owner distributes the prizes
+        assert_ok!(Betting::distribute_winnings(RuntimeOrigin::signed(1)));
 
-//         // Check the free balance from the account has been returned
-//         println!("{}",Balances::free_balance(1));
-//     });
-// }
+        // Check the free balance from the account has been returned
+        assert_eq!(Balances::free_balance(1),balance_before_deposit);
+       // println!("{}",Balances::free_balance(1));
+    });
+}
