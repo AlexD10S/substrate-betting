@@ -457,6 +457,9 @@ pub mod pallet {
 
             ensure!(match_to_bet.result.is_some(), Error::<T>::MatchNotResult);
 
+            let match_hash = Self::get_match_hash(match_to_bet.clone());
+            <MatchHashes<T>>::take(match_hash).ok_or(Error::<T>::MatchDoesNotExist)?;
+
             // Iterate over all bets
             let mut total_winners: BalanceOf<T> = 0u32.into();
             let mut total_bet: BalanceOf<T> = 0u32.into();
